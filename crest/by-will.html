@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Non Oculus, Sed Nutus</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@300;400&display=swap');
+
+        :root {
+            --gold: #D4AF37;
+            --dark-gold: #aa8c2c;
+            --black: #0a0a0a;
+            --faint: rgba(212, 175, 55, 0.2);
+            --text-main: #e0e0e0;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--black);
+            color: var(--gold);
+            font-family: 'Cinzel', serif;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Canvas Layer */
+        #world {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        /* UI Layer */
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+            /* Let clicks pass to canvas mainly */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            pointer-events: auto;
+            margin-top: 10px;
+            text-shadow: 0 0 10px black;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            letter-spacing: 3px;
+            color: var(--gold);
+        }
+
+        .subtitle {
+            font-family: 'Lato', sans-serif;
+            font-size: 0.8rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* Controls */
+        .controls {
+            text-align: center;
+            pointer-events: auto;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        .btn {
+            background: transparent;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            padding: 12px 24px;
+            font-family: 'Cinzel', serif;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            backdrop-filter: blur(5px);
+        }
+
+        .btn:hover,
+        .btn.active {
+            background: var(--gold);
+            color: var(--black);
+            box-shadow: 0 0 15px var(--faint);
+        }
+
+        /* Modal / Reader */
+        #knowledge-panel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            background: rgba(10, 10, 10, 0.95);
+            border: 1px solid var(--gold);
+            padding: 30px;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 10;
+            overflow-y: auto;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+            border-radius: 4px;
+        }
+
+        #knowledge-panel.open {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .panel-content {
+            font-family: 'Lato', sans-serif;
+            line-height: 1.6;
+            color: var(--text-main);
+        }
+
+        .panel-content h2 {
+            font-family: 'Cinzel', serif;
+            color: var(--gold);
+            border-bottom: 1px solid var(--faint);
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+
+        .panel-content h3 {
+            color: var(--gold);
+            font-size: 1.1em;
+            margin-top: 20px;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 24px;
+            color: var(--gold);
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+
+        .instruction {
+            position: absolute;
+            bottom: 100px;
+            width: 100%;
+            text-align: center;
+            font-family: 'Lato', sans-serif;
+            font-size: 0.8rem;
+            opacity: 0.7;
+            pointer-events: none;
+            animation: pulse 3s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 0.3;
+            }
+
+            50% {
+                opacity: 0.8;
+            }
+
+            100% {
+                opacity: 0.3;
+            }
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #000;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--dark-gold);
+            border-radius: 3px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="world"></canvas>
+
+    <div id="ui-layer">
+        <header>
+            <h1>Non Oculus, Sed Nutus</h1>
+            <div class="subtitle">Not by Sight, But by Will</div>
+        </header>
+
+        <div class="instruction">
+            <span id="hint-text">Touch the motes to learn. Toggle modes to transform.</span>
+        </div>
+
+        <div class="controls">
+            <button class="btn active" id="btn-oculus" onclick="setMode('oculus')">Oculus (Eye)</button>
+            <button class="btn" id="btn-nutus" onclick="setMode('nutus')">Nutus (Will)</button>
+        </div>
+    </div>
+
+    <div id="knowledge-panel">
+        <button class="close-btn" onclick="closePanel()">×</button>
+        <div id="panel-content" class="panel-content">
+            <!-- Dynamic Content Here -->
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Data Source: Extracted from the Research Document
+         */
+        const researchData = {
+            'MORPHOLOGY': {
+                title: 'I. The Morphology of the Nod',
+                content: `
+                <p>The word <strong>Nutus</strong> (4th declension) derives from the archaic verb <em>nuere</em>, meaning "to nod". Unlike static nouns, it retains the kinetic energy of a verb.</p>
+                <p>While <strong>Oculus</strong> (the Eye) is a passive receptor of light, <strong>Nutus</strong> is an active projector of meaning. It signifies a command, an assent, or a downward tendency.</p>
+                <h3>Key Concept</h3>
+                <p>The structure "Non X, Sed Y" is a rhetorical <em>correctio</em>. It rejects the superficial evidence of the eyes in favor of the absolute authority of the will.</p>
+            `
+            },
+            'PHYSICS': {
+                title: 'II. Physics: The Gravity of Will',
+                content: `
+                <p>In Roman physics, before Newton, the tendency of heavy objects to fall was described as their <em>nutus</em>—their "nod" towards the earth.</p>
+                <p>A stone falls not because it is pushed, but because it has an internal inclination. Thus, "Non Oculus, Sed Nutus" in a scientific context implies: "Do not look at the position, but consider the mass/tendency."</p>
+                <p><em>Terrena suopte nutu</em>: Earthly things move by their own nod.</p>
+            `
+            },
+            'IMPERIUM': {
+                title: 'III. Politics: The Imperial Command',
+                content: `
+                <p>To live <em>ad nutum</em> meant to live at the mercy of a superior's silent command. The most powerful Emperor did not need to shout; he only needed to nod.</p>
+                <p>This creates a hierarchy of power: The Eye sees the chaos of the court, but the Nod directs the outcome. It is a maxim of political survival: obey the invisible will of the sovereign.</p>
+            `
+            },
+            'THEOLOGY': {
+                title: 'IV. Theology: The Divine Nod',
+                content: `
+                <p>St. Augustine transformed the political nod into the <strong>Nutus Voluntatis</strong> (The Assent of the Will). We are saved not by what we see (Oculus), but by the movement of the will towards God.</p>
+                <p>Furthermore, <em>Numen</em> (Divinity) shares the same etymological root as <em>Nutus</em>. To speak of the "Nod" is to speak of God's power acting upon the world (Divine Providence).</p>
+            `
+            },
+            'HERALDRY': {
+                title: 'V. Heraldry: The Nutt Family',
+                content: `
+                <p>The motto is a sophisticated "canting" pun for the <strong>Nutt</strong> family.</p>
+                <ul>
+                    <li><strong>Visual Pun:</strong> Nutt sounds like <em>Nutus</em>.</li>
+                    <li><strong>Meaning:</strong> "Not the Nut (Nux), but the Will (Nutus)."</li>
+                </ul>
+                <p>The family arms (Sable and Or) symbolize Constancy and Generosity, reinforcing the stability of the "Nod" against the wandering "Eye."</p>
+            `
+            }
+        };
+
+        const keywords = Object.keys(researchData);
+
+        /**
+         * Canvas & Animation Setup
+         */
+        const canvas = document.getElementById('world');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let particles = [];
+        let mode = 'oculus'; // 'oculus' or 'nutus'
+        let mouse = { x: 0, y: 0, active: false };
+        let animationId;
+
+        // Resize handling
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            initParticles();
+        }
+        window.addEventListener('resize', resize);
+
+        // Mouse/Touch handling
+        window.addEventListener('mousemove', e => {
+            mouse.x = e.clientX;
+            mouse.y = e.clientY;
+            mouse.active = true;
+        });
+        window.addEventListener('touchstart', e => {
+            mouse.x = e.touches[0].clientX;
+            mouse.y = e.touches[0].clientY;
+            mouse.active = true;
+        }, { passive: false });
+        window.addEventListener('touchmove', e => {
+            mouse.x = e.touches[0].clientX;
+            mouse.y = e.touches[0].clientY;
+            // e.preventDefault(); // Prevent scrolling
+        }, { passive: false });
+        window.addEventListener('touchend', () => mouse.active = false);
+
+
+        /**
+         * Particle Class
+         */
+        class Particle {
+            constructor(text, role) {
+                this.text = text;
+                this.role = role; // 'bg', 'keyword', 'symbol'
+
+                // Physics properties
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.friction = 0.94;
+                this.ease = 0.05;
+
+                // Targets
+                this.targetX = this.x;
+                this.targetY = this.y;
+
+                // Appearance
+                this.size = role === 'keyword' ? 14 : (role === 'symbol' ? 2 : 10);
+                this.color = role === 'keyword' ? '#D4AF37' : '#444';
+                this.alpha = Math.random();
+            }
+
+            update() {
+                // Logic based on mode
+                if (mode === 'oculus') {
+                    this.behaviorOculus();
+                } else {
+                    this.behaviorNutus();
+                }
+
+                // Move
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Draw
+                ctx.save();
+                ctx.globalAlpha = this.role === 'keyword' ? 1 : this.alpha;
+                ctx.font = this.role === 'keyword' ? `bold ${this.size}px Cinzel` : `${this.size}px Lato`;
+                ctx.fillStyle = this.color;
+
+                if (this.role === 'symbol') {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    ctx.fillText(this.text, this.x, this.y);
+                }
+                ctx.restore();
+            }
+
+            behaviorOculus() {
+                // In Oculus mode, particles form an Eye shape or float chaotically
+                // They are affected by mouse "looking" (repulsion or attraction)
+
+                // Calculate distance to center
+                const centerX = width / 2;
+                const centerY = height / 2;
+
+                // Form an Eye Shape
+                let tx, ty;
+
+                // Map index to position in concentric circles (Eye)
+                if (this.role === 'bg' || this.role === 'symbol') {
+                    const angle = (this.index / particles.length) * Math.PI * 20; // Multiple spirals
+                    const radius = (this.index / particles.length) * (Math.min(width, height) * 0.4);
+                    tx = centerX + Math.cos(angle) * radius * 1.5; // Stretch horizontally for eye shape
+                    ty = centerY + Math.sin(angle) * radius * 0.8;
+                } else {
+                    // Keywords float in the "pupil" area or iris
+                    const angle = Math.random() * Math.PI * 2;
+                    const radius = Math.random() * 50 + 50;
+                    tx = centerX + Math.cos(angle) * radius;
+                    ty = centerY + Math.sin(angle) * radius;
+                }
+
+                // Mouse interaction: The "Pupil" follows the mouse
+                if (mouse.active) {
+                    const dx = mouse.x - this.x;
+                    const dy = mouse.y - this.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    // Parallax / Tracking effect
+                    if (dist < 200) {
+                        this.vx += dx * 0.001;
+                        this.vy += dy * 0.001;
+                    }
+                }
+
+                // Drift back to target loosely
+                this.vx += (tx - this.x) * 0.005;
+                this.vy += (ty - this.y) * 0.005;
+
+                // Random jitter (illusion/unreliability)
+                this.vx += (Math.random() - 0.5) * 0.2;
+                this.vy += (Math.random() - 0.5) * 0.2;
+
+                this.vx *= this.friction;
+                this.vy *= this.friction;
+            }
+
+            behaviorNutus() {
+                // In Nutus mode, particles snap to a rigid Crest/Shield shape
+                // Gravity is strong. Mouse interaction is weak (Authority ignores the observer).
+
+                const centerX = width / 2;
+                const centerY = height / 2;
+
+                // Shield dimensions
+                const shieldScale = Math.min(width, height) * 0.0025;
+
+                // Parametric Shield Shape
+                // Simple heater shield shape logic or just a grid
+
+                let tx, ty;
+
+                if (this.role === 'keyword') {
+                    // Keywords form a vertical column (The "Pale" or central charge)
+                    const idx = keywords.indexOf(this.text);
+                    tx = centerX;
+                    ty = centerY - 100 + (idx * 50);
+                } else {
+                    // Background particles form the shield outline and field
+                    // Simple shield math: x^2 + y^2 ish, pointed bottom
+                    const row = Math.floor(Math.sqrt(this.index));
+                    const col = this.index - row * row;
+
+                    // Arrange in a triangle/shield formation
+                    const spread = 20;
+                    tx = centerX + (col - row / 2) * spread;
+                    ty = centerY - 150 + (row * 15);
+
+                    // Clip to shield shape vaguely
+                    if (Math.abs(tx - centerX) > (row * 10)) {
+                        // If outside shield, fall to bottom (Gravity)
+                        ty = height - 10;
+                    }
+                }
+
+                // Strong Snap to grid
+                this.vx += (tx - this.x) * 0.1; // Stronger pull
+                this.vy += (ty - this.y) * 0.1;
+
+                this.vx *= 0.8; // Heavy damping (Gravity)
+                this.vy *= 0.8;
+            }
+        }
+
+        /**
+         * Initialization
+         */
+        function initParticles() {
+            particles = [];
+
+            // Add Keywords (Interactive nodes)
+            keywords.forEach((key, i) => {
+                const p = new Particle(key, 'keyword');
+                p.index = i;
+                particles.push(p);
+            });
+
+            // Add Background Text (Latin filler & Dots)
+            const latinWords = ['oculus', 'nutus', 'non', 'sed', 'visio', 'fides', 'gravitas', 'imperium', 'numen', 'nux', 'motus', 'causa'];
+            const particleCount = width < 600 ? 150 : 300; // Mobile optimization
+
+            for (let i = 0; i < particleCount; i++) {
+                const isWord = Math.random() > 0.7;
+                const text = isWord ? latinWords[Math.floor(Math.random() * latinWords.length)] : '.';
+                const role = isWord ? 'bg' : 'symbol';
+                const p = new Particle(text, role);
+                p.index = i + keywords.length;
+                particles.push(p);
+            }
+        }
+
+        /**
+         * Animation Loop
+         */
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+
+            // Draw connecting lines in Nutus mode (Structure)
+            if (mode === 'nutus') {
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(212, 175, 55, 0.1)';
+                ctx.lineWidth = 1;
+                for (let i = 0; i < keywords.length - 1; i++) {
+                    const p1 = particles[i];
+                    const p2 = particles[i + 1];
+                    ctx.moveTo(p1.x, p1.y);
+                    ctx.lineTo(p2.x, p2.y);
+                }
+                ctx.stroke();
+            }
+
+            particles.forEach(p => p.update());
+
+            animationId = requestAnimationFrame(animate);
+        }
+
+        /**
+         * Interaction Logic
+         */
+        function setMode(newMode) {
+            mode = newMode;
+            document.getElementById('btn-oculus').classList.toggle('active', mode === 'oculus');
+            document.getElementById('btn-nutus').classList.toggle('active', mode === 'nutus');
+
+            const hint = document.getElementById('hint-text');
+            if (mode === 'oculus') {
+                hint.innerText = "The Eye wanders. It is easily deceived by motion.";
+            } else {
+                hint.innerText = "The Will is constant. It gravitates towards the truth.";
+            }
+        }
+
+        // Click handling for keywords
+        canvas.addEventListener('click', e => {
+            const rect = canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+
+            // Check collision with keyword particles
+            for (let p of particles) {
+                if (p.role === 'keyword') {
+                    const dx = clickX - p.x;
+                    const dy = clickY - p.y;
+                    if (Math.sqrt(dx * dx + dy * dy) < 30) {
+                        openPanel(p.text);
+                        return;
+                    }
+                }
+            }
+        });
+
+        /**
+         * UI Logic (Modal)
+         */
+        function openPanel(key) {
+            const data = researchData[key];
+            if (!data) return;
+
+            const panel = document.getElementById('knowledge-panel');
+            const content = document.getElementById('panel-content');
+
+            content.innerHTML = `<h2>${data.title}</h2>${data.content}`;
+            panel.classList.add('open');
+        }
+
+        function closePanel() {
+            document.getElementById('knowledge-panel').classList.remove('open');
+        }
+
+        // Initialize
+        resize();
+        animate();
+
+    </script>
+</body>
+
+</html>

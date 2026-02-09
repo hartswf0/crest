@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>The Shield: Inversion of Ekphrasis</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&family=Playfair+Display:ital,wght@0,700;1,700&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --accent: #d4af37;
+            --text: #e5e5e5;
+            --font-main: 'Inter', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        html,
+        body {
+            height: 100dvh;
+            width: 100%;
+            overflow: hidden;
+            position: fixed;
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: var(--font-main);
+            transition: background-color 0.5s ease, color 0.5s ease;
+        }
+
+        /* Mode Specifics */
+        .mode-homer {
+            --bg: #0f0e0c;
+            --accent: #c5a059;
+            --text: #f4ebd0;
+            font-family: 'Playfair Display', serif;
+        }
+
+        .mode-auden {
+            --bg: #1a1a1a;
+            --accent: #888888;
+            --text: #cccccc;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .mode-cyber {
+            --bg: #000000;
+            --accent: #00ff41;
+            --text: #ffffff;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Layout */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            padding: env(safe-area-inset-top) 1.5rem env(safe-area-inset-bottom) 1.5rem;
+        }
+
+        /* Crest Geometry */
+        .crest-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 0;
+        }
+
+        .crest-svg {
+            width: min(40vh, 65vw);
+            height: min(40vh, 65vw);
+            transition: all 0.7s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+
+        .crest-path {
+            fill: none;
+            stroke: var(--accent);
+            stroke-width: 1.5;
+            transition: d 0.7s cubic-bezier(0.19, 1, 0.22, 1), stroke 0.5s ease;
+        }
+
+        /* UI Elements */
+        .nav-button {
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: transparent;
+            padding: 0.75rem 0.5rem;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            transition: all 0.3s ease;
+            color: var(--text);
+            opacity: 0.5;
+            flex: 1;
+        }
+
+        .nav-button.active {
+            opacity: 1;
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .data-grid {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            padding: 1rem 0;
+        }
+
+        .data-label {
+            font-size: 0.55rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            opacity: 0.5;
+            margin-bottom: 0.25rem;
+        }
+
+        .data-value {
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .analysis-text {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+            height: 4.5rem;
+            /* Fixed height for text stability */
+            overflow: hidden;
+        }
+
+        .motto-text {
+            font-size: 1.25rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-top: 1rem;
+            color: var(--accent);
+        }
+
+        /* Decorative Scanline for Auden/Cyber */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.05;
+            background: linear-gradient(to bottom, transparent 50%, #000 50%);
+            background-size: 100% 4px;
+            display: none;
+        }
+
+        .mode-auden .overlay,
+        .mode-cyber .overlay {
+            display: block;
+        }
+    </style>
+</head>
+
+<body class="mode-homer">
+    <div class="overlay"></div>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="pt-8 text-center flex-shrink-0">
+            <h1 id="title" class="text-xs uppercase tracking-[0.3em] font-bold">The Shield of Achilles</h1>
+            <p id="subheading" class="text-[0.6rem] uppercase opacity-60 mt-2 italic tracking-widest">Inversion of
+                Ekphrasis</p>
+        </header>
+
+        <!-- Visual Crest -->
+        <div class="crest-area">
+            <div class="text-center">
+                <svg class="crest-svg" viewBox="0 0 100 100">
+                    <!-- Base Circle/Ring -->
+                    <circle cx="50" cy="50" r="48" class="crest-path" style="stroke-opacity: 0.2;" />
+                    <!-- Morphing Path -->
+                    <path id="morph-path" class="crest-path" d="M 50,15 A 35,35 0 1,1 49.9,15 Z" />
+                    <!-- Detail Elements -->
+                    <path id="detail-path" class="crest-path" d="M 50,30 V 70 M 30,50 H 70"
+                        style="stroke-opacity: 0.4;" />
+                </svg>
+                <div id="motto" class="motto-text">Mundus Divinus</div>
+            </div>
+        </div>
+
+        <!-- Description -->
+        <div class="flex-shrink-0">
+            <p id="analysis" class="analysis-text">
+                A celebration of the living cosmos. The shield mirrors a sacramental universe where cities, harvests,
+                and stars are woven into a protective narrative of order.
+            </p>
+        </div>
+
+        <!-- Meta Data Grid -->
+        <div class="data-grid flex-shrink-0">
+            <div>
+                <div class="data-label">Materiality</div>
+                <div id="material" class="data-value">Gold & Bronze</div>
+            </div>
+            <div>
+                <div class="data-label">Logic</div>
+                <div id="logic" class="data-value">Thick Context</div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="flex gap-2 mb-8 flex-shrink-0">
+            <button onclick="update('homer')" id="btn-homer" class="nav-button active">Homer</button>
+            <button onclick="update('auden')" id="btn-auden" class="nav-button">Auden</button>
+            <button onclick="update('cyber')" id="btn-cyber" class="nav-button">The Feed</button>
+        </nav>
+    </div>
+
+    <script>
+        const content = {
+            homer: {
+                title: "The Shield of Achilles",
+                sub: "Level I: The Sacramental Cosmos",
+                motto: "Mundus Divinus",
+                analysis: "A celebration of the living cosmos. The shield mirrors a sacramental universe where cities, harvests, and stars are woven into a protective narrative of order.",
+                material: "Gold & Bronze",
+                logic: "Thick Context",
+                // Morph to a circle
+                path: "M 50,15 A 35,35 0 1,1 49.9,15 Z",
+                detail: "M 50,30 V 70 M 30,50 H 70"
+            },
+            auden: {
+                title: "The Auden Render",
+                sub: "Level II: The Bureaucratic Void",
+                motto: "Solitudo Artificialis",
+                analysis: "The inversion of the sacred. A weed-choked field, a million boots, lead-grey skies. The shield is no longer a protection, but a heavy, industrial enclosure.",
+                material: "Lead & Concrete",
+                logic: "Thin Description",
+                // Morph to a square
+                path: "M 20,20 H 80 V 80 H 20 Z",
+                detail: "M 20,40 H 80 M 20,60 H 80 M 40,20 V 80 M 60,20 V 80"
+            },
+            cyber: {
+                title: "Speculum Vorax",
+                sub: "Level III: The Digital Feed",
+                motto: "Mundus Sine Fabula",
+                analysis: "The screen as the final shield. It distracts rather than protects. A world without a story, where attention is extracted via the algorithm of indifference.",
+                material: "Liquid Crystal",
+                logic: "Operational Nihilism",
+                // Morph to a crosshair/reticle
+                path: "M 10,10 L 30,30 M 70,10 L 90,30 M 10,90 L 30,70 M 70,90 L 90,70 M 50,10 V 20 M 50,80 V 90 M 10,50 H 20 M 80,50 H 90",
+                detail: "M 45,50 H 55 M 50,45 V 55"
+            }
+        };
+
+        function update(mode) {
+            const data = content[mode];
+
+            // Classes
+            document.body.className = `mode-${mode}`;
+            document.querySelectorAll('.nav-button').forEach(b => b.classList.remove('active'));
+            document.getElementById(`btn-${mode}`).classList.add('active');
+
+            // Text transition
+            const els = ['title', 'subheading', 'motto', 'analysis', 'material', 'logic'];
+            els.forEach(id => {
+                const el = document.getElementById(id);
+                el.style.opacity = 0;
+                el.style.transform = 'translateY(5px)';
+            });
+
+            setTimeout(() => {
+                document.getElementById('title').innerText = data.title;
+                document.getElementById('subheading').innerText = data.sub;
+                document.getElementById('motto').innerText = data.motto;
+                document.getElementById('analysis').innerText = data.analysis;
+                document.getElementById('material').innerText = data.material;
+                document.getElementById('logic').innerText = data.logic;
+
+                // SVG Morph
+                document.getElementById('morph-path').setAttribute('d', data.path);
+                document.getElementById('detail-path').setAttribute('d', data.detail);
+
+                els.forEach(id => {
+                    const el = document.getElementById(id);
+                    el.style.opacity = 1;
+                    el.style.transform = 'translateY(0)';
+                    el.style.transition = 'all 0.5s ease';
+                });
+            }, 300);
+        }
+
+        // Initialize
+        window.onload = () => update('homer');
+    </script>
+</body>
+
+</html>

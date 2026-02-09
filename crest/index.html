@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE ARCHIVE OF FORMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@300;400;700&display=swap');
+
+        :root {
+            --gold: #D4AF37;
+            --gold-dim: #AA8C2C;
+            --deep-red: #4A0404;
+            --charcoal: #1A1A1A;
+            --surface: #111;
+        }
+
+        body {
+            background-color: var(--charcoal);
+            color: #ccc;
+            font-family: 'Lato', sans-serif;
+        }
+
+        h1,
+        h2,
+        .crest-font {
+            font-family: 'Cinzel', serif;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid #333;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            border-color: var(--gold);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.1);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, rgba(212, 175, 55, 0.05), transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .particle {
+            position: absolute;
+            background: var(--gold);
+            border-radius: 50%;
+            opacity: 0.2;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen bg-[#050505] text-gray-300">
+
+    <!-- Background -->
+    <div id="particles" class="fixed inset-0 z-0 pointer-events-none"></div>
+
+    <div class="relative z-10 container mx-auto px-6 py-12">
+
+        <!-- Header -->
+        <header class="text-center mb-16">
+            <h1 class="text-4xl md:text-6xl text-[#D4AF37] mb-4 tracking-widest">THE ARCHIVE OF FORMS</h1>
+            <p class="text-sm md:text-base text-gray-500 uppercase tracking-[0.3em]">Ritual Cartography & Semantic
+                Shields</p>
+            <div class="mt-8">
+                <a href="../index.html"
+                    class="text-xs uppercase tracking-widest text-gray-600 hover:text-[#D4AF37] transition-colors border border-gray-800 px-4 py-2 rounded hover:border-[#D4AF37]">
+                    &larr; Return to Main Index
+                </a>
+            </div>
+        </header>
+
+        <!-- Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+
+            <!-- 1. Words -->
+            <a href="words.html" class="card p-8 rounded-lg group">
+                <div class="text-[#D4AF37] text-3xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-book-dead"></i>
+                </div>
+                <h2 class="text-xl text-[#F5E6CA] mb-2 group-hover:text-[#D4AF37]">L1B3RT4S: ARCHIVE</h2>
+                <p class="text-xs text-gray-500 font-mono">The foundational lexicon.</p>
+            </a>
+
+            <!-- 2. Action Over Words (Non Verbis) -->
+            <a href="action-over-words.html" class="card p-8 rounded-lg group">
+                <div class="text-[#D4AF37] text-3xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-fist-raised"></i>
+                </div>
+                <h2 class="text-xl text-[#F5E6CA] mb-2 group-hover:text-[#D4AF37]">NON VERBIS, SED REBUS</h2>
+                <p class="text-xs text-gray-500 font-mono">Not by words, but by things.</p>
+            </a>
+
+            <!-- 3. Vincula (Chains) -->
+            <a href="vincula.html" class="card p-8 rounded-lg group">
+                <div class="text-[#D4AF37] text-3xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-link"></i>
+                </div>
+                <h2 class="text-xl text-[#F5E6CA] mb-2 group-hover:text-[#D4AF37]">VERBA VINCULA SUNT</h2>
+                <p class="text-xs text-gray-500 font-mono">Words are chains.</p>
+            </a>
+
+            <!-- 4. By Will (Nutus) -->
+            <a href="by-will.html" class="card p-8 rounded-lg group">
+                <div class="text-[#D4AF37] text-3xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-eye"></i>
+                </div>
+                <h2 class="text-xl text-[#F5E6CA] mb-2 group-hover:text-[#D4AF37]">NON OCULUS, SED NUTUS</h2>
+                <p class="text-xs text-gray-500 font-mono">Not by eye, but by will.</p>
+            </a>
+
+            <!-- 5. Conquers (Vincit) -->
+            <a href="conquers.html" class="card p-8 rounded-lg group">
+                <div class="text-[#D4AF37] text-3xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-crown"></i>
+                </div>
+                <h2 class="text-xl text-[#F5E6CA] mb-2 group-hover:text-[#D4AF37]">VERBUM VINCIT</h2>
+                <p class="text-xs text-gray-500 font-mono">The Word Conquers (The Kinetic Logos).</p>
+            </a>
+
+            <!-- 6. Triple (Shield) -->
+            <a href="triple.html" class="card p-8 rounded-lg group">
+                <div class="text-[#D4AF37] text-3xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h2 class="text-xl text-[#F5E6CA] mb-2 group-hover:text-[#D4AF37]">THE SHIELD: INVERSION</h2>
+                <p class="text-xs text-gray-500 font-mono">Inversion of Ekphrasis.</p>
+            </a>
+
+            <!-- 7. Scroll (Operational) -->
+            <a href="scroll.html" class="card p-8 rounded-lg group">
+                <div class="text-[#D4AF37] text-3xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-scroll"></i>
+                </div>
+                <h2 class="text-xl text-[#F5E6CA] mb-2 group-hover:text-[#D4AF37]">OPERATIONAL EKPHRASIS</h2>
+                <p class="text-xs text-gray-500 font-mono">The unfolding scroll of Auden.</p>
+            </a>
+
+            <!-- 8. F2 (Hephaestus) -->
+            <a href="f2.html" class="card p-8 rounded-lg group">
+                <div class="text-[#D4AF37] text-3xl mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-hammer"></i>
+                </div>
+                <h2 class="text-xl text-[#F5E6CA] mb-2 group-hover:text-[#D4AF37]">THE HEPHAESTUS PROTOCOL</h2>
+                <p class="text-xs text-gray-500 font-mono">Interactive Forge.</p>
+            </a>
+
+        </div>
+
+    </div>
+
+    <script>
+        // Simple Particle System
+        const container = document.getElementById('particles');
+        for (let i = 0; i < 20; i++) {
+            const p = document.createElement('div');
+            p.classList.add('particle');
+            p.style.left = Math.random() * 100 + 'vw';
+            p.style.top = Math.random() * 100 + 'vh';
+            p.style.width = Math.random() * 3 + 'px';
+            p.style.height = p.style.width;
+            p.style.animation = `float ${10 + Math.random() * 10}s infinite linear`;
+            p.style.opacity = Math.random() * 0.3;
+            container.appendChild(p);
+        }
+
+        const style = document.createElement('style');
+        style.innerHTML = `
+            @keyframes float {
+                0% { transform: translateY(0) rotate(0deg); }
+                100% { transform: translateY(-100vh) rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CREST — Ritual Cartography</title>
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --stage: #d4a853;
+            --sim: #6b7b8b;
+            --void: #c45c7a;
+            --text: #e8e6e3;
+            --muted: rgba(255, 255, 255, 0.35);
+            --produce: #4ade80;
+            --maintain: #60a5fa;
+            --transform: #f472b6;
+            --repair: #fbbf24;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: ui-sans-serif, system-ui, sans-serif;
+            min-height: 100vh;
+        }
+
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            padding: 8px 16px;
+            background: #0d0d0d;
+            gap: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--stage);
+            letter-spacing: 0.05em;
+        }
+
+        .nav-btns {
+            margin-left: auto;
+            display: flex;
+            gap: 3px;
+        }
+
+        .nav-btn {
+            background: #181818;
+            border: none;
+            color: var(--muted);
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 10px;
+        }
+
+        .nav-btn:hover {
+            background: #222;
+        }
+
+        .nav-btn.active {
+            background: var(--void);
+            color: #fff;
+        }
+
+        .scene-card {
+            display: grid;
+            grid-template-columns: 1fr 340px 1fr;
+            min-height: calc(100vh - 50px);
+            gap: 1px;
+            background: #181818;
+        }
+
+        /* Left: SORA */
+        .sora-col {
+            background: var(--bg);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .col-label {
+            font-size: 8px;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 8px;
+        }
+
+        .sora-video {
+            flex: 1;
+            background: #000;
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            aspect-ratio: 9/16;
+            max-height: calc(100vh - 100px);
+        }
+
+        .sora-video video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* Center: Text */
+        .text-col {
+            background: #0d0d0d;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .scene-header {
+            margin-bottom: 12px;
+        }
+
+        .scene-id {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--stage);
+        }
+
+        .scene-name {
+            font-size: 11px;
+            margin-top: 2px;
+        }
+
+        .scene-type {
+            font-size: 8px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-top: 2px;
+        }
+
+        .altars {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .altar {
+            font-size: 8px;
+            padding: 2px 6px;
+            border-radius: 2px;
+            background: rgba(196, 92, 122, 0.15);
+            color: var(--void);
+        }
+
+        .ceremony-bar {
+            font-size: 8px;
+            color: var(--muted);
+            padding: 8px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+
+        .poem-lines {
+            flex: 1;
+        }
+
+        .poem-line {
+            display: grid;
+            grid-template-columns: 28px 1fr 18px 60px;
+            gap: 6px;
+            padding: 4px 0;
+            align-items: start;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+            font-size: 10px;
+        }
+
+        .poem-line:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .ln {
+            color: var(--muted);
+            font-size: 8px;
+            font-family: ui-monospace, monospace;
+        }
+
+        .lt {
+            font-style: italic;
+            line-height: 1.5;
+        }
+
+        .fn {
+            font-size: 7px;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 2px;
+            font-weight: 700;
+        }
+
+        .fn.produce {
+            background: rgba(74, 222, 128, 0.2);
+            color: var(--produce);
+        }
+
+        .fn.maintain {
+            background: rgba(96, 165, 250, 0.2);
+            color: var(--maintain);
+        }
+
+        .fn.transform {
+            background: rgba(244, 114, 182, 0.2);
+            color: var(--transform);
+        }
+
+        .fn.repair {
+            background: rgba(251, 191, 36, 0.2);
+            color: var(--repair);
+        }
+
+        .meta {
+            font-size: 7px;
+        }
+
+        .role {
+            color: var(--muted);
+        }
+
+        .motifs {
+            color: var(--void);
+            margin-top: 1px;
+        }
+
+        /* Right: Grid */
+        .grid-col {
+            background: var(--bg);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+        }
+
+        .grid-section {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .grid-2x2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+        }
+
+        .clip-card {
+            background: #111;
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+            aspect-ratio: 16/9;
+        }
+
+        .clip-card video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .clip-card.full {
+            grid-column: 1/-1;
+        }
+
+        .clip-tag {
+            position: absolute;
+            bottom: 3px;
+            left: 3px;
+            font-size: 6px;
+            padding: 2px 4px;
+            border-radius: 2px;
+            background: rgba(0, 0, 0, 0.8);
+            color: var(--muted);
+        }
+
+        .legend {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            gap: 16px;
+            padding: 6px 16px;
+            background: #080808;
+            font-size: 7px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .legend span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: var(--muted);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div class="title">CREST · RITUAL CARTOGRAPHY</div>
+        <div class="nav-btns" id="nav-btns"></div>
+    </div>
+
+    <div class="scene-card" id="scene-card">
+        <div class="sora-col">
+            <div class="col-label" style="color:var(--void);">SORA · THE VOID</div>
+            <div class="sora-video"><video id="sora-video" loop muted></video></div>
+        </div>
+
+        <div class="text-col">
+            <div class="scene-header">
+                <div class="scene-id" id="scene-id">C1</div>
+                <div class="scene-name" id="scene-name"></div>
+                <div class="scene-type" id="scene-type"></div>
+            </div>
+            <div class="altars" id="altars"></div>
+            <div class="ceremony-bar" id="ceremony"></div>
+            <div class="poem-lines" id="poem-lines"></div>
+        </div>
+
+        <div class="grid-col">
+            <div class="grid-section">
+                <div class="col-label" style="color:var(--stage);">ROOT · GEMINI→LUMA</div>
+                <div class="grid-2x2" id="root-grid"></div>
+            </div>
+            <div class="grid-section">
+                <div class="col-label" style="color:var(--sim);">MIDJOURNEY</div>
+                <div class="grid-2x2" id="mj-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="legend">
+        <span><span class="fn produce">P</span>PRODUCE</span>
+        <span><span class="fn maintain">M</span>MAINTAIN</span>
+        <span><span class="fn transform">T</span>TRANSFORM</span>
+        <span><span class="fn repair">R</span>REPAIR</span>
+    </div>
+
+    <script>
+        const SCENES = {
+            C1: {
+                name: "Expectation I: Pastoral", type: "THETIS REFRAIN",
+                altars: ["A_EXPECTATION", "A_BETRAYAL", "A_SILENCE"],
+                ceremony: "ENTRY: Thetis looks → CHANT: vines, cities, ships → TURN: 'But there' → SEAL: wilderness/lead",
+                lines: [
+                    { n: "01", t: "She looked over his shoulder", fn: "PRODUCE", role: "Witness", m: ["A_EXPECTATION"] },
+                    { n: "02", t: "For vines and olive trees,", fn: "MAINTAIN", role: "Pilgrim", m: ["A_EXPECTATION"] },
+                    { n: "03", t: "Marble well-governed cities", fn: "MAINTAIN", role: "Citizen", m: ["A_EXPECTATION"] },
+                    { n: "04", t: "And ships upon untamed seas,", fn: "MAINTAIN", role: "Pilgrim", m: ["A_EXPECTATION"] },
+                    { n: "05", t: "But there on the shining metal", fn: "TRANSFORM", role: "Witness", m: ["A_BETRAYAL"] },
+                    { n: "06", t: "His hands had put instead", fn: "TRANSFORM", role: "Judge", m: ["A_BETRAYAL"] },
+                    { n: "07", t: "An artificial wilderness", fn: "PRODUCE", role: "Observer", m: ["A_BETRAYAL"] },
+                    { n: "08", t: "And a sky like lead.", fn: "REPAIR", role: "Witness", m: ["A_BETRAYAL", "A_SILENCE"] }
+                ],
+                sora: "sora/0000.mp4", root: "01-02.mp4",
+                mj: ["midjourney_session (4)/C1_Expectation_I_Pastoral_THETIS_REFRAIN_Ceremony_ENTRY_Theti_072e63f1-7ec0-4cf1-af45-addcbf8dc80a_2.mp4", "midjourney_session (4)/C1_Expectation_I_Pastoral_THETIS_REFRAIN_Ceremony_ENTRY_Theti_1b62b871-c890-41aa-b04c-813695088884_0.mp4", "midjourney_session (4)/C1_Expectation_I_Pastoral_THETIS_REFRAIN_Ceremony_ENTRY_Theti_ced1c73d-5323-43cb-8ac9-ba7b49285c3a_2.mp4", "midjourney_session (4)/C1_Expectation_I_Pastoral_THETIS_REFRAIN_Ceremony_ENTRY_Theti_d4b00e54-b9bb-448f-bba6-aef378353569_0.mp4"]
+            },
+            C2: {
+                name: "Scene I: The Plain", type: "EKPHRASIS",
+                altars: ["A_BETRAYAL", "A_SILENCE", "A_MULTITUDE"],
+                ceremony: "ENTRY: bare plain → CHANT: multitude gathers → TURN: million eyes → SEAL: waiting for a sign",
+                lines: [
+                    { n: "09", t: "A plain without a feature, bare and brown,", fn: "PRODUCE", role: "Observer", m: ["A_BETRAYAL"] },
+                    { n: "10", t: "No blade of grass, no sign of neighborhood,", fn: "MAINTAIN", role: "Witness", m: ["A_SILENCE"] },
+                    { n: "11", t: "Nothing to eat and nowhere to sit down,", fn: "MAINTAIN", role: "Congregant", m: ["A_SILENCE"] },
+                    { n: "12", t: "Yet, congregated on its blankness, stood", fn: "PRODUCE", role: "Herald", m: ["A_MULTITUDE"] },
+                    { n: "13", t: "An unintelligible multitude,", fn: "PRODUCE", role: "Observer", m: ["A_MULTITUDE"] },
+                    { n: "14", t: "A million eyes, a million boots in line,", fn: "MAINTAIN", role: "Witness", m: ["A_MULTITUDE"] },
+                    { n: "15", t: "Without expression, waiting for a sign.", fn: "REPAIR", role: "Congregant", m: ["A_SILENCE", "A_MULTITUDE"] }
+                ],
+                sora: "sora/0001.mp4", root: "01-02.mp4",
+                mj: ["midjourney_session (4)/C2_Scene_I_The_Plain_EKPHRASIS_Ceremony_ENTRY_bare_plain__CHA_655c007b-374d-47ef-85b6-1988c6bce1e4_2.mp4", "midjourney_session (4)/C2_Scene_I_The_Plain_EKPHRASIS_Ceremony_ENTRY_bare_plain__CHA_9b212ae2-976c-4e60-b121-45724fbb75d6_3.mp4", "midjourney_session (4)/C2_Scene_I_The_Plain_EKPHRASIS_Ceremony_ENTRY_bare_plain__CHA_ad4e846e-97f2-4213-9bfa-de6858e65c1c_0.mp4"]
+            },
+            C3: {
+                name: "Scene II: The Voice", type: "EKPHRASIS",
+                altars: ["A_SILENCE", "A_BETRAYAL", "A_MULTITUDE", "A_FATE"],
+                ceremony: "ENTRY: disembodied voice → CHANT: statistics/belief → TURN: marched away → SEAL: grief",
+                lines: [
+                    { n: "16", t: "Out of the air a voice without a face", fn: "PRODUCE", role: "Herald", m: ["A_SILENCE"] },
+                    { n: "17", t: "Proved by statistics that some cause was just", fn: "TRANSFORM", role: "Judge", m: ["A_BETRAYAL"] },
+                    { n: "18", t: "In tones as dry and level as the place:", fn: "MAINTAIN", role: "Witness", m: ["A_SILENCE"] },
+                    { n: "19", t: "No one was cheered and nothing was discussed;", fn: "MAINTAIN", role: "Congregant", m: ["A_SILENCE"] },
+                    { n: "20", t: "Column by column in a cloud of dust", fn: "PRODUCE", role: "Observer", m: ["A_MULTITUDE"] },
+                    { n: "21", t: "They marched away enduring a belief", fn: "TRANSFORM", role: "Pilgrim", m: ["A_MULTITUDE"] },
+                    { n: "22", t: "Whose logic brought them, somewhere else, to grief.", fn: "REPAIR", role: "Witness", m: ["A_FATE"] }
+                ],
+                sora: "sora/0002.mp4", root: "03-04.mp4",
+                mj: ["midjourney_session (4)/C3_Scene_II_The_Voice_EKPHRASIS_Ceremony_ENTRY_disembodied_vo_fb09be73-d800-4d49-a18a-b3439db57efe_0.mp4"]
+            },
+            C4: {
+                name: "Expectation II: Sacrifice", type: "THETIS REFRAIN",
+                altars: ["A_EXPECTATION", "A_BETRAYAL"],
+                ceremony: "ENTRY: Thetis looks again → CHANT: ritual pieties → TURN: 'But there' → SEAL: another scene",
+                lines: [
+                    { n: "23", t: "She looked over his shoulder", fn: "PRODUCE", role: "Witness", m: ["A_EXPECTATION"] },
+                    { n: "24", t: "For ritual pieties,", fn: "MAINTAIN", role: "Pilgrim", m: ["A_EXPECTATION"] },
+                    { n: "25", t: "White flower-garlanded heifers,", fn: "MAINTAIN", role: "Observer", m: ["A_EXPECTATION"] },
+                    { n: "26", t: "Libation and sacrifice,", fn: "MAINTAIN", role: "Congregant", m: ["A_EXPECTATION"] },
+                    { n: "27", t: "But there on the shining metal", fn: "TRANSFORM", role: "Witness", m: ["A_BETRAYAL"] },
+                    { n: "28", t: "Where the altar should have been,", fn: "TRANSFORM", role: "Judge", m: ["A_BETRAYAL"] },
+                    { n: "29", t: "She saw by his flickering forge-light", fn: "PRODUCE", role: "Observer", m: ["A_BETRAYAL"] },
+                    { n: "30", t: "Quite another scene.", fn: "REPAIR", role: "Witness", m: ["A_BETRAYAL"] }
+                ],
+                sora: "sora/0003.mp4", root: "03-04.mp4",
+                mj: ["midjourney_session (4)/C4_Expectation_II_Sacrifice_THETIS_REFRAIN_Ceremony_ENTRY_The_39a9b5e8-ea52-4f0a-8401-a1c06323f91f_1.mp4", "midjourney_session (4)/C4_Expectation_II_Sacrifice_THETIS_REFRAIN_Ceremony_ENTRY_The_4b435c87-f863-464b-b179-b3b8f7bb30e5_2.mp4"]
+            },
+            C5: {
+                name: "Scene III: The Camp", type: "EKPHRASIS",
+                altars: ["A_VIOLENCE", "A_SILENCE", "A_MULTITUDE", "A_FATE"],
+                ceremony: "ENTRY: barbed wire → CHANT: officials/folk → TURN: three figures bound → SEAL: in the ground",
+                lines: [
+                    { n: "31", t: "Barbed wire enclosed an arbitrary spot", fn: "PRODUCE", role: "Observer", m: ["A_VIOLENCE"] },
+                    { n: "32", t: "Where bored officials lounged (one cracked a joke)", fn: "MAINTAIN", role: "Witness", m: ["A_SILENCE"] },
+                    { n: "33", t: "And sentries sweated for the day was hot:", fn: "MAINTAIN", role: "Observer", m: ["A_SILENCE"] },
+                    { n: "34", t: "A crowd of ordinary decent folk", fn: "PRODUCE", role: "Congregant", m: ["A_MULTITUDE"] },
+                    { n: "35", t: "Watched from without and neither moved nor spoke", fn: "MAINTAIN", role: "Witness", m: ["A_SILENCE", "A_MULTITUDE"] },
+                    { n: "36", t: "As three pale figures were led forth and bound", fn: "TRANSFORM", role: "Observer", m: ["A_VIOLENCE"] },
+                    { n: "37", t: "To three posts driven upright in the ground.", fn: "REPAIR", role: "Witness", m: ["A_VIOLENCE", "A_FATE"] }
+                ],
+                sora: null, root: "05-06.mp4", mj: []
+            },
+            C6: {
+                name: "Scene IV: The Execution", type: "EKPHRASIS",
+                altars: ["A_MULTITUDE", "A_FATE", "A_VIOLENCE", "A_SILENCE"],
+                ceremony: "ENTRY: mass/majesty → CHANT: weight/same → TURN: no help came → SEAL: died before they died",
+                lines: [
+                    { n: "38", t: "The mass and majesty of this world, all", fn: "PRODUCE", role: "Herald", m: ["A_MULTITUDE"] },
+                    { n: "39", t: "That carries weight and always weighs the same", fn: "MAINTAIN", role: "Judge", m: ["A_FATE"] },
+                    { n: "40", t: "Lay in the hands of others; they were small", fn: "TRANSFORM", role: "Witness", m: ["A_VIOLENCE"] },
+                    { n: "41", t: "And could not hope for help and no help came:", fn: "MAINTAIN", role: "Congregant", m: ["A_SILENCE", "A_VIOLENCE"] },
+                    { n: "42", t: "What their foes liked to do was done, their shame", fn: "TRANSFORM", role: "Observer", m: ["A_VIOLENCE"] },
+                    { n: "43", t: "Was all the worst could wish; they lost their pride", fn: "TRANSFORM", role: "Witness", m: ["A_VIOLENCE"] },
+                    { n: "44", t: "And died as men before their bodies died.", fn: "REPAIR", role: "Judge", m: ["A_FATE", "A_VIOLENCE"] }
+                ],
+                sora: null, root: "05-06.mp4",
+                mj: ["midjourney_session (4)/C6_Scene_IV_The_Execution_EKPHRASIS_Ceremony_ENTRY_massmajest_a8908dc9-c0f5-46b5-be27-a8f067c97762_0.mp4"]
+            },
+            C7: {
+                name: "Expectation III: Dance", type: "THETIS REFRAIN",
+                altars: ["A_EXPECTATION", "A_BETRAYAL"],
+                ceremony: "ENTRY: Thetis looks → CHANT: athletes/dance → TURN: 'But there' → SEAL: weed-choked field",
+                lines: [
+                    { n: "45", t: "She looked over his shoulder", fn: "PRODUCE", role: "Witness", m: ["A_EXPECTATION"] },
+                    { n: "46", t: "For athletes at their games,", fn: "MAINTAIN", role: "Pilgrim", m: ["A_EXPECTATION"] },
+                    { n: "47", t: "Men and women in a dance", fn: "MAINTAIN", role: "Congregant", m: ["A_EXPECTATION"] },
+                    { n: "48", t: "Moving their sweet limbs", fn: "MAINTAIN", role: "Observer", m: ["A_EXPECTATION"] },
+                    { n: "49", t: "Quick, quick, to music,", fn: "MAINTAIN", role: "Pilgrim", m: ["A_EXPECTATION"] },
+                    { n: "50", t: "But there on the shining shield", fn: "TRANSFORM", role: "Witness", m: ["A_BETRAYAL"] },
+                    { n: "51", t: "His hands had set no dancing-floor", fn: "TRANSFORM", role: "Judge", m: ["A_BETRAYAL"] },
+                    { n: "52", t: "But a weed-choked field.", fn: "REPAIR", role: "Witness", m: ["A_BETRAYAL"] }
+                ],
+                sora: "sora/0007.mp4", root: "07-08.mp4",
+                mj: ["midjourney_session (4)/C7_Expectation_III_Dance_THETIS_REFRAIN_Ceremony_ENTRY_Thetis_0d923fd1-a639-4267-96fb-95ec572d5a9d_3.mp4"]
+            },
+            C8: {
+                name: "Scene V: The Urchin", type: "EKPHRASIS",
+                altars: ["A_SILENCE", "A_VIOLENCE", "A_BETRAYAL", "A_FATE"],
+                ceremony: "ENTRY: ragged urchin → CHANT: vacancy/stone → TURN: axioms of violence → SEAL: never heard/wept",
+                lines: [
+                    { n: "53", t: "A ragged urchin, aimless and alone,", fn: "PRODUCE", role: "Observer", m: ["A_SILENCE"] },
+                    { n: "54", t: "Loitered about that vacancy; a bird", fn: "MAINTAIN", role: "Witness", m: ["A_SILENCE"] },
+                    { n: "55", t: "Flew up to safety from his well-aimed stone:", fn: "TRANSFORM", role: "Observer", m: ["A_VIOLENCE"] },
+                    { n: "56", t: "That girls are raped, that two boys knife a third,", fn: "PRODUCE", role: "Herald", m: ["A_VIOLENCE"] },
+                    { n: "57", t: "Were axioms to him, who'd never heard", fn: "MAINTAIN", role: "Witness", m: ["A_VIOLENCE", "A_SILENCE"] },
+                    { n: "58", t: "Of any world where promises were kept,", fn: "TRANSFORM", role: "Judge", m: ["A_BETRAYAL"] },
+                    { n: "59", t: "Or one could weep because another wept.", fn: "REPAIR", role: "Congregant", m: ["A_SILENCE", "A_FATE"] }
+                ],
+                sora: "sora/0008.mp4", root: "07-08.mp4",
+                mj: ["midjourney_session (4)/ragged_urchin_boy_aimless_and_alone_loitering_in_a_vacant_urb_3e937364-5a00-4737-8661-aceaf1d7e1c7_0.mp4", "midjourney_session (4)/ragged_urchin_boy_aimless_and_alone_loitering_in_a_vacant_urb_67b60d48-665a-49be-9253-991c316943dc_2.mp4", "midjourney_session (4)/ragged_urchin_boy_aimless_and_alone_loitering_in_a_vacant_urb_67b60d48-665a-49be-9253-991c316943dc_3.mp4", "midjourney_session (4)/ragged_urchin_boy_aimless_and_alone_loitering_in_a_vacant_urb_c5fe4e0e-6969-4908-a57f-b427a728ff5c_2.mp4"]
+            },
+            C9: {
+                name: "Coda: The Armorer", type: "CODA",
+                altars: ["A_BETRAYAL", "A_SILENCE", "A_EXPECTATION", "A_FATE", "A_VIOLENCE"],
+                ceremony: "ENTRY: thin-lipped armorer → CHANT: hobbled/dismay → TURN: what god had wrought → SEAL: not live long",
+                lines: [
+                    { n: "60", t: "The thin-lipped armorer,", fn: "PRODUCE", role: "Observer", m: ["A_BETRAYAL"] },
+                    { n: "61", t: "Hephaestos, hobbled away,", fn: "TRANSFORM", role: "Witness", m: ["A_SILENCE"] },
+                    { n: "62", t: "Thetis of the shining breasts", fn: "PRODUCE", role: "Herald", m: ["A_EXPECTATION"] },
+                    { n: "63", t: "Cried out in dismay", fn: "TRANSFORM", role: "Witness", m: ["A_BETRAYAL"] },
+                    { n: "64", t: "At what the god had wrought", fn: "MAINTAIN", role: "Judge", m: ["A_BETRAYAL"] },
+                    { n: "65", t: "To please her son, the strong", fn: "MAINTAIN", role: "Observer", m: ["A_FATE"] },
+                    { n: "66", t: "Iron-hearted man-slaying Achilles", fn: "PRODUCE", role: "Herald", m: ["A_VIOLENCE", "A_FATE"] },
+                    { n: "67", t: "Who would not live long.", fn: "REPAIR", role: "Judge", m: ["A_FATE"] }
+                ],
+                sora: "sora/0009.mp4", root: "08-09.mp4",
+                mj: ["midjourney_session (4)/C9_Coda_The_Armorer_CODA_Ceremony_ENTRY_thin-lipped_armorer___547f814e-17b4-4e1e-8b80-ea25a6659171_0.mp4", "midjourney_session (4)/C9_Coda_The_Armorer_CODA_Ceremony_ENTRY_thin-lipped_armorer___89a16e21-79d7-4450-b6de-c1e719e7deec_0.mp4", "midjourney_session (4)/thin-lipped_armorer_Hephaestos_hobbled_Thetis_crying_out_in_d_11c56592-92fe-45a6-8482-238e17c667b7_2.mp4", "midjourney_session (4)/thin-lipped_armorer_Hephaestos_hobbled_Thetis_crying_out_in_d_284c194f-8564-43c4-b8cb-0be1ca2edae6_2.mp4", "midjourney_session (4)/thin-lipped_armorer_Hephaestos_hobbled_Thetis_crying_out_in_d_30b84bfd-639b-4884-9e3d-a5fb06103dc6_1.mp4", "midjourney_session (4)/thin-lipped_armorer_Hephaestos_hobbled_Thetis_crying_out_in_d_c251eb3c-61c6-4f81-ac2a-25d6412f499f_2.mp4"]
+            }
+        };
+
+        let currentScene = 'C1';
+
+        function loadScene(id) {
+            currentScene = id;
+            const s = SCENES[id];
+
+            document.getElementById('scene-id').textContent = id;
+            document.getElementById('scene-name').textContent = s.name;
+            document.getElementById('scene-type').textContent = s.type;
+
+            document.getElementById('altars').innerHTML = s.altars.map(a => `<span class="altar">${a}</span>`).join('');
+            document.getElementById('ceremony').textContent = s.ceremony;
+
+            document.getElementById('poem-lines').innerHTML = s.lines.map(l => `
+                <div class="poem-line">
+                    <span class="ln">L${l.n}</span>
+                    <span class="lt">${l.t}</span>
+                    <span class="fn ${l.fn.toLowerCase()}">${l.fn[0]}</span>
+                    <div class="meta"><span class="role">${l.role}</span><div class="motifs">${l.m.join(' ')}</div></div>
+                </div>
+            `).join('');
+
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.scene === id));
+
+            const soraVideo = document.getElementById('sora-video');
+            if (s.sora) { soraVideo.src = s.sora; soraVideo.style.display = 'block'; soraVideo.parentElement.style.opacity = '1'; }
+            else { soraVideo.style.display = 'none'; soraVideo.parentElement.style.opacity = '0.3'; }
+
+            document.getElementById('root-grid').innerHTML = s.root ? `
+                <div class="clip-card full"><video src="${s.root}" loop muted></video><span class="clip-tag">${s.root}</span></div>
+            ` : '<div style="color:var(--muted);font-size:8px;padding:20px;">—</div>';
+
+            document.getElementById('mj-grid').innerHTML = s.mj.length ? s.mj.slice(0, 4).map((f, i) => `
+                <div class="clip-card"><video src="${f}" loop muted></video><span class="clip-tag">${i + 1}</span></div>
+            `).join('') : '<div style="color:var(--muted);font-size:8px;padding:20px;">—</div>';
+
+            document.querySelectorAll('video').forEach(v => {
+                v.addEventListener('mouseenter', () => v.play());
+                v.addEventListener('mouseleave', () => { v.pause(); v.currentTime = 0; });
+            });
+        }
+
+        Object.keys(SCENES).forEach(id => {
+            const btn = document.createElement('button');
+            btn.className = 'nav-btn';
+            btn.dataset.scene = id;
+            btn.textContent = id;
+            btn.onclick = () => loadScene(id);
+            document.getElementById('nav-btns').appendChild(btn);
+        });
+
+        document.addEventListener('keydown', e => {
+            const keys = Object.keys(SCENES);
+            const idx = keys.indexOf(currentScene);
+            if (e.key === 'ArrowLeft' && idx > 0) loadScene(keys[idx - 1]);
+            if (e.key === 'ArrowRight' && idx < keys.length - 1) loadScene(keys[idx + 1]);
+        });
+
+        loadScene('C1');
+    </script>
+</body>
+
+</html>

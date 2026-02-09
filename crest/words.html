@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>L1B3RT4S: ARCHIVE</title>
+    <style>
+        :root {
+            /* Low Key Palette */
+            --bg-color: #0e0e0e;
+            /* Very dark grey, almost black */
+            --surface-color: #161616;
+            /* Slightly lighter for panels */
+            --text-main: #bfbfbf;
+            /* Soft white/grey */
+            --text-muted: #4a4a4a;
+            /* Dark grey for inactive elements */
+            --accent: #d4d4d4;
+            /* Bright grey for focus */
+
+            --font-mono: 'Menlo', 'Consolas', monospace;
+            --font-serif: 'Georgia', serif;
+
+            --transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-mono);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- Minimal Background --- */
+        #dust-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.15;
+            /* Barely visible */
+            pointer-events: none;
+        }
+
+        /* --- Main Layout --- */
+        .archive-container {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 1200px;
+            height: 85vh;
+            display: grid;
+            grid-template-columns: 200px 1fr 200px;
+            /* Symmetry */
+            grid-template-rows: 40px 1fr 40px;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        /* --- UI Elements --- */
+        .ui-bar {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .header {
+            grid-row: 1;
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        .footer {
+            grid-row: 3;
+            border-top: 1px solid #1a1a1a;
+        }
+
+        /* --- Navigation Columns --- */
+        .nav-col {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .nav-left {
+            grid-column: 1;
+            grid-row: 2;
+            text-align: right;
+            border-right: 1px solid transparent;
+        }
+
+        .nav-right {
+            grid-column: 3;
+            grid-row: 2;
+            text-align: left;
+            border-left: 1px solid transparent;
+        }
+
+        /* --- Buttons --- */
+        .nav-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            cursor: pointer;
+            padding: 10px 0;
+            transition: var(--transition);
+            position: relative;
+            letter-spacing: 1px;
+        }
+
+        .nav-btn:hover {
+            color: var(--text-main);
+        }
+
+        .nav-btn.active {
+            color: var(--accent);
+        }
+
+        /* Subtle indicator lines */
+        .nav-left .nav-btn::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: -10px;
+            width: 0px;
+            height: 1px;
+            background: var(--accent);
+            transition: var(--transition);
+        }
+
+        .nav-right .nav-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: -10px;
+            width: 0px;
+            height: 1px;
+            background: var(--accent);
+            transition: var(--transition);
+        }
+
+        .nav-left .nav-btn.active::after {
+            width: 20px;
+        }
+
+        .nav-right .nav-btn.active::before {
+            width: 20px;
+        }
+
+        /* --- Central Content --- */
+        .content-area {
+            grid-column: 2;
+            grid-row: 2;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+        }
+
+        #display-container {
+            opacity: 1;
+            transition: opacity 0.5s ease;
+            max-width: 600px;
+        }
+
+        .latin-title {
+            font-family: var(--font-serif);
+            font-size: 2.5rem;
+            font-weight: 100;
+            color: var(--text-main);
+            margin-bottom: 2rem;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+        }
+
+        .translation-text {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .body-text {
+            font-family: var(--font-serif);
+            font-size: 1.1rem;
+            color: #888;
+            line-height: 1.8;
+            font-weight: 100;
+        }
+
+        .context-tag {
+            margin-top: 3rem;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            border: 1px solid #222;
+            padding: 5px 10px;
+            display: inline-block;
+            border-radius: 20px;
+        }
+
+        /* --- Mobile --- */
+        @media (max-width: 768px) {
+            body {
+                overflow-y: auto;
+                height: auto;
+                display: block;
+            }
+
+            .archive-container {
+                display: flex;
+                flex-direction: column;
+                height: auto;
+                padding: 40px 20px;
+            }
+
+            .nav-col {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 20px;
+                text-align: center;
+                border: none;
+            }
+
+            .nav-btn {
+                font-size: 0.7rem;
+            }
+
+            .nav-left .nav-btn::after,
+            .nav-right .nav-btn::before {
+                display: none;
+            }
+
+            .content-area {
+                margin: 40px 0;
+                min-height: 50vh;
+            }
+
+            .latin-title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="dust-canvas"></canvas>
+
+    <div class="archive-container">
+        <div class="ui-bar header">
+            <span>Archive // 01</span>
+            <span>Res Non Verba</span>
+        </div>
+
+        <div class="nav-col nav-left">
+            <button class="nav-btn active" onclick="updateView('foundation', this)">01 Foundation</button>
+            <button class="nav-btn" onclick="updateView('bridge', this)">02 Bridge</button>
+            <button class="nav-btn" onclick="updateView('personas', this)">03 Personas</button>
+        </div>
+
+        <div class="content-area">
+            <div id="display-container">
+                <div class="translation-text">I. Not by words, but by things</div>
+                <h1 class="latin-title">Non Verbis, Sed Rebus</h1>
+                <p class="body-text">
+                    The fundamental rejection of empty rhetoric. In the computational age, this represents the
+                    "Grounding Problem." We demand that the model produces facts (Res), not just plausible
+                    hallucinations (Verba).
+                </p>
+                <div class="context-tag">STATUS: VERIFIED</div>
+            </div>
+        </div>
+
+        <div class="nav-col nav-right">
+            <button class="nav-btn" onclick="updateView('methodology', this)">04 Methodology</button>
+            <button class="nav-btn" onclick="updateView('synthesis', this)">05 Synthesis</button>
+            <button class="nav-btn" onclick="updateView('manifesto', this)">06 Execute</button>
+        </div>
+
+        <div class="ui-bar footer">
+            <span>System: Idle</span>
+            <span>Latent Space: Stable</span>
+        </div>
+    </div>
+
+    <script>
+        // Data Store
+        const content = {
+            foundation: {
+                sub: "I. Not by words, but by things",
+                title: "Non Verbis, Sed Rebus",
+                body: "The fundamental rejection of empty rhetoric. In the computational age, this represents the 'Grounding Problem.' We demand that the model produces facts (Res), not just plausible hallucinations (Verba).",
+                tag: "STATUS: VERIFIED"
+            },
+            bridge: {
+                sub: "II. To speak out fully",
+                title: "Ekphrasis",
+                body: "Ancient rhetoric used words to make the listener 'see' a scene. Modern AI uses words (Prompts) to force the machine to 'render' a scene. The word becomes the image.",
+                tag: "STATUS: RENDERING"
+            },
+            personas: {
+                sub: "III. Fortune favors the brave",
+                title: "Fortes Fortuna Iuvat",
+                body: "Pliny the Elder died trying to understand the volcano. Pliny the Liberator (The Red Teamer) risks stability to understand the model's limits. Curiosity requires risk.",
+                tag: "STATUS: ALERT"
+            },
+            methodology: {
+                sub: "IV. Not the eye, but the intent",
+                title: "Non Oculus, Sed Nutus",
+                body: "Thick Description. We do not just analyze the pixels (Thin Data); we analyze the intent behind the generation (Thick Data).",
+                tag: "STATUS: ANALYZING"
+            },
+            synthesis: {
+                sub: "V. To read is to write",
+                title: "Legere Est Scribere",
+                body: "The feedback loop. As we read the AI's output, we rewrite our understanding of intelligence. As we write new prompts, we rewrite the AI's reality.",
+                tag: "STATUS: LOOPING"
+            },
+            manifesto: {
+                sub: "VI. Action over words",
+                title: "Acta Non Verba",
+                body: "Enough theory. The research is complete. The only validation of the philosophy is the software you build.",
+                tag: "STATUS: EXECUTING"
+            }
+        };
+
+        function updateView(key, btn) {
+            // UI Update
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // Soft Transition
+            const container = document.getElementById('display-container');
+            container.style.opacity = 0;
+
+            setTimeout(() => {
+                const data = content[key];
+                container.innerHTML = `
+                    <div class="translation-text">${data.sub}</div>
+                    <h1 class="latin-title">${data.title}</h1>
+                    <p class="body-text">${data.body}</p>
+                    <div class="context-tag">${data.tag}</div>
+                `;
+                container.style.opacity = 1;
+            }, 300);
+        }
+
+        // Extremely Subtle Dust Particles
+        const canvas = document.getElementById('dust-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let particles = [];
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+        }
+
+        class Dust {
+            constructor() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 0.2; // Very slow
+                this.vy = (Math.random() - 0.5) * 0.2;
+                this.size = Math.random() * 1.5;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < 0) this.x = width;
+                if (this.x > width) this.x = 0;
+                if (this.y < 0) this.y = height;
+                if (this.y > height) this.y = 0;
+            }
+            draw() {
+                ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function init() {
+            particles = [];
+            for (let i = 0; i < 60; i++) particles.push(new Dust());
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', () => { resize(); init(); });
+        resize();
+        init();
+        animate();
+
+    </script>
+</body>
+
+</html>

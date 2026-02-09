@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHIELD OF SHIELDS: LIVING DASHBOARD</title>
+    <style>
+        /* MONOMYTHIC DASHBOARD: SHIELD OF SHIELDS */
+        :root {
+            --bg-color: #050505;
+            --text-color: #ffffff;
+            --accent-gold: #d4a853;
+            --accent-red: #cc0000;
+            --bead-radius: 50%;
+            --grid-gap: 8px;
+            --pill-radius: 999px;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            perspective: 1000px;
+        }
+
+        header {
+            padding: 15px 25px;
+            background: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.8) 100%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 50;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            box-sizing: border-box;
+            pointer-events: none;
+        }
+
+        header>* {
+            pointer-events: auto;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 20px;
+            letter-spacing: 5px;
+            color: var(--accent-gold);
+            text-transform: uppercase;
+            font-weight: 300;
+            text-shadow: 0 0 10px rgba(212, 168, 83, 0.5);
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        h1:hover {
+            color: #fff;
+            text-shadow: 0 0 20px #fff;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+        }
+
+        .btn {
+            cursor: pointer;
+            color: #666;
+            transition: color 0.3s;
+            border: 1px solid #333;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            color: var(--accent-gold);
+            border-color: var(--accent-gold);
+        }
+
+        .btn.active {
+            color: var(--accent-red);
+            border-color: var(--accent-red);
+            text-shadow: 0 0 5px var(--accent-red);
+        }
+
+        #mosaic-container {
+            flex: 1;
+            position: relative;
+            padding: 20px;
+            transition: transform 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+            transform-style: preserve-3d;
+        }
+
+        /* GRID MODE */
+        #mosaic-container.grid-mode {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-auto-rows: minmax(100px, 1fr);
+            gap: var(--grid-gap);
+            overflow-y: auto;
+            padding-top: 80px;
+        }
+
+        /* SHIELD MODE */
+        #mosaic-container.shield-mode {
+            display: block;
+            overflow: visible;
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        .clip-cell {
+            position: relative;
+            background: #000;
+            overflow: hidden;
+            border-radius: var(--bead-radius);
+            border: 1px solid #222;
+            filter: grayscale(100%) contrast(120%) brightness(0.7);
+            transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+            width: 100%;
+            height: 100%;
+        }
+
+        /* SHIELD MODE CELLS */
+        .shield-mode .clip-cell {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            top: 50%;
+            left: 50%;
+            margin-top: -30px;
+            margin-left: -30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Blend Modes */
+        .shield-mode .clip-cell video {
+            opacity: 0.9;
+        }
+
+        .shield-mode .clip-cell:hover video {
+            opacity: 1;
+        }
+
+        .clip-cell:hover {
+            filter: grayscale(0%) contrast(110%) brightness(1.2);
+            border-color: var(--accent-gold);
+            transform: scale(1.5);
+            z-index: 900 !important;
+        }
+
+        /* CLICKED ZOOM STATE */
+        .clip-cell.focused {
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            width: 60vw !important;
+            height: 60vh !important;
+            margin-left: -30vw !important;
+            margin-top: -30vh !important;
+            z-index: 2000 !important;
+            transform: none !important;
+            border-radius: 20px;
+            filter: none;
+            border: 2px solid var(--accent-gold);
+            box-shadow: 0 0 100px rgba(0, 0, 0, 0.9);
+        }
+
+        /* CLOSE BUTTON FOR FOCUSED CELL */
+        .clip-cell.focused::after {
+            content: "×";
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            color: #fff;
+            font-size: 40px;
+            text-shadow: 0 0 10px #000;
+            pointer-events: none;
+        }
+
+        .clip-cell.active {
+            filter: grayscale(0%) contrast(100%) brightness(1.2);
+            border-color: var(--accent-red);
+            transform: scale(1.3);
+            box-shadow: 0 0 20px var(--accent-red);
+            z-index: 100;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.5s;
+        }
+
+        .type-sora {
+            grid-row: span 2;
+            border-radius: var(--pill-radius);
+        }
+
+        .shield-mode .type-sora {
+            width: 50px;
+            height: 100px;
+            margin-top: -50px;
+            margin-left: -25px;
+            border-radius: 50px;
+        }
+
+        /* SVG LINES LAYER */
+        #shield-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 1s;
+            z-index: 10;
+        }
+
+        .shield-mode #shield-lines {
+            opacity: 1;
+        }
+
+        line {
+            stroke: rgba(212, 168, 83, 0.2);
+            stroke-width: 1;
+            vector-effect: non-scaling-stroke;
+        }
+
+        /* SPIN ANIMATION */
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .spinning {
+            animation: spin 60s linear infinite;
+        }
+
+        #ekphrasis-display {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            text-align: right;
+            max-width: 600px;
+            z-index: 30;
+            text-shadow: 2px 2px 0 #000;
+            pointer-events: none;
+        }
+
+        .ek-title {
+            font-size: 18px;
+            color: var(--accent-gold);
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .ek-text {
+            font-size: 14px;
+            color: #fff;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1 id="view-toggle" title="Click to Toggle Shield Map">SHIELD OF SHIELDS</h1>
+        <div class="controls">
+            <div class="btn" id="btn-lines">LINES</div>
+            <div class="btn" id="btn-spin">SPIN</div>
+            <div class="btn" id="btn-reset">RESET</div>
+        </div>
+    </header>
+
+    <div id="mosaic-container" class="grid-mode">
+        <svg id="shield-lines"></svg>
+        <!-- Visual Rings for Shield Mode -->
+        <div class="shield-ring"
+            style="width:200px; height:200px; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); border:1px dashed #222; border-radius:50%; pointer-events:none; opacity:0;">
+        </div>
+    </div>
+
+    <div id="ekphrasis-display">
+        <span class="ek-title">INITIALIZING MONOMYTH...</span>
+    </div>
+
+    <script>
+        const CONFIG = {
+            sora: [
+                { id: '0000', src: 'sora/0000.mp4', scene: 'C1' },
+                { id: '0001', src: 'sora/0001.mp4', scene: 'C2' },
+                { id: '0002', src: 'sora/0002.mp4', scene: 'C3' },
+                { id: '0003', src: 'sora/0003.mp4', scene: 'C4' },
+                { id: '0007', src: 'sora/0007.mp4', scene: 'C7' },
+                { id: '0008', src: 'sora/0008.mp4', scene: 'C8' },
+                { id: '0009', src: 'sora/0009.mp4', scene: 'C9' },
+            ],
+            root: [
+                { id: 'C1-C2', src: '01-02.mp4', scene: 'C1/C2' },
+                { id: 'C3-C4', src: '03-04.mp4', scene: 'C3/C4' },
+                { id: 'C5', src: '05-06.mp4#t=0,7', scene: 'C5' },
+                { id: 'C6', src: '05-06.mp4#t=7,14', scene: 'C6' },
+                { id: 'C7-C8', src: '07-08.mp4', scene: 'C7/C8' },
+                { id: 'C9', src: '08-09.mp4', scene: 'C9' },
+            ],
+            mj: [
+                'midjourney_session (4)/C1_Expectation_I_Pastoral_THETIS_REFRAIN_Ceremony_ENTRY_Theti_072e63f1-7ec0-4cf1-af45-addcbf8dc80a_2.mp4',
+                'midjourney_session (4)/C1_Expectation_I_Pastoral_THETIS_REFRAIN_Ceremony_ENTRY_Theti_1b62b871-c890-41aa-b04c-813695088884_0.mp4',
+                'midjourney_session (4)/C1_Expectation_I_Pastoral_THETIS_REFRAIN_Ceremony_ENTRY_Theti_ced1c73d-5323-43cb-8ac9-ba7b49285c3a_2.mp4',
+                'midjourney_session (4)/C1_Expectation_I_Pastoral_THETIS_REFRAIN_Ceremony_ENTRY_Theti_d4b00e54-b9bb-448f-bba6-aef378353569_0.mp4',
+                'midjourney_session (4)/C2_Scene_I_The_Plain_EKPHRASIS_Ceremony_ENTRY_bare_plain__CHA_655c007b-374d-47ef-85b6-1988c6bce1e4_2.mp4',
+                'midjourney_session (4)/C2_Scene_I_The_Plain_EKPHRASIS_Ceremony_ENTRY_bare_plain__CHA_9b212ae2-976c-4e60-b121-45724fbb75d6_3.mp4',
+                'midjourney_session (4)/C2_Scene_I_The_Plain_EKPHRASIS_Ceremony_ENTRY_bare_plain__CHA_ad4e846e-97f2-4213-9bfa-de6858e65c1c_0.mp4',
+                'midjourney_session (4)/C3_Scene_II_The_Voice_EKPHRASIS_Ceremony_ENTRY_disembodied_vo_fb09be73-d800-4d49-a18a-b3439db57efe_0.mp4',
+                'midjourney_session (4)/C4_Expectation_II_Sacrifice_THETIS_REFRAIN_Ceremony_ENTRY_The_39a9b5e8-ea52-4f0a-8401-a1c06323f91f_1.mp4',
+                'midjourney_session (4)/C4_Expectation_II_Sacrifice_THETIS_REFRAIN_Ceremony_ENTRY_The_4b435c87-f863-464b-b179-b3b8f7bb30e5_2.mp4',
+                'midjourney_session (4)/C4_Expectation_II_Sacrifice_THETIS_REFRAIN_Ceremony_ENTRY_The_5a7b20f4-05f2-40ff-8d88-df13e7651253_2.mp4',
+                'midjourney_session (4)/C4_Expectation_II_Sacrifice_THETIS_REFRAIN_Ceremony_ENTRY_The_67028f0f-e60e-49a3-86dd-60958deab5da_0.mp4',
+                'midjourney_session (4)/C6_Scene_IV_The_Execution_EKPHRASIS_Ceremony_ENTRY_massmajest_a8908dc9-c0f5-46b5-be27-a8f067c97762_0.mp4',
+                'midjourney_session (4)/C7_Expectation_III_Dance_THETIS_REFRAIN_Ceremony_ENTRY_Thetis_0d923fd1-a639-4267-96fb-95ec572d5a9d_3.mp4',
+                'midjourney_session (4)/C9_Coda_The_Armorer_CODA_Ceremony_ENTRY_thin-lipped_armorer___547f814e-17b4-4e1e-8b80-ea25a6659171_0.mp4',
+                'midjourney_session (4)/C9_Coda_The_Armorer_CODA_Ceremony_ENTRY_thin-lipped_armorer___89a16e21-79d7-4450-b6de-c1e719e7deec_0.mp4',
+                'midjourney_session (4)/C9_Coda_The_Armorer_CODA_Ceremony_ENTRY_thin-lipped_armorer___ae7a95d6-6e25-4ff3-8c76-db32e117c8a3_3.mp4',
+                'midjourney_session (4)/C9_Coda_The_Armorer_CODA_Ceremony_ENTRY_thin-lipped_armorer___c415b940-de7c-4347-b588-6fc302dfcc8e_2.mp4',
+                'midjourney_session (4)/C9_Coda_The_Armorer_CODA_Ceremony_ENTRY_thin-lipped_armorer___c415b940-de7c-4347-b588-6fc302dfcc8e_3.mp4',
+                'midjourney_session (4)/C9_Coda_The_Armorer_CODA_Ceremony_ENTRY_thin-lipped_armorer___eb583895-85e6-4339-b5b1-5db22f85a092_0.mp4',
+                'midjourney_session (4)/ragged_urchin_boy_aimless_and_alone_loitering_in_a_vacant_urb_3e937364-5a00-4737-8661-aceaf1d7e1c7_0.mp4',
+                'midjourney_session (4)/ragged_urchin_boy_aimless_and_alone_loitering_in_a_vacant_urb_67b60d48-665a-49be-9253-991c316943dc_2.mp4',
+                'midjourney_session (4)/ragged_urchin_boy_aimless_and_alone_loitering_in_a_vacant_urb_67b60d48-665a-49be-9253-991c316943dc_3.mp4',
+                'midjourney_session (4)/ragged_urchin_boy_aimless_and_alone_loitering_in_a_vacant_urb_c5fe4e0e-6969-4908-a57f-b427a728ff5c_2.mp4',
+                'midjourney_session (4)/thin-lipped_armorer_Hephaestos_hobbled_Thetis_crying_out_in_d_11c56592-92fe-45a6-8482-238e17c667b7_2.mp4',
+                'midjourney_session (4)/thin-lipped_armorer_Hephaestos_hobbled_Thetis_crying_out_in_d_284c194f-8564-43c4-b8cb-0be1ca2edae6_2.mp4',
+                'midjourney_session (4)/thin-lipped_armorer_Hephaestos_hobbled_Thetis_crying_out_in_d_30b84bfd-639b-4884-9e3d-a5fb06103dc6_1.mp4',
+            ]
+        };
+
+        const container = document.getElementById('mosaic-container');
+        const svgLayer = document.getElementById('shield-lines');
+        const cells = [];
+
+        function createCell(type, src, label) {
+            const div = document.createElement('div');
+            div.className = `clip-cell type-${type}`;
+            div.dataset.label = label;
+
+            const vid = document.createElement('video');
+            vid.src = src; vid.loop = true; vid.muted = true;
+            vid.playsInline = true; vid.autoplay = true;
+            vid.currentTime = Math.random() * 5;
+
+            div.appendChild(vid);
+
+            // CLICK TO ZOOM
+            div.addEventListener('click', (e) => {
+                if (div.classList.contains('focused')) {
+                    div.classList.remove('focused');
+                } else {
+                    document.querySelectorAll('.focused').forEach(c => c.classList.remove('focused'));
+                    div.classList.add('focused');
+                }
+                e.stopPropagation();
+            });
+
+            container.appendChild(div);
+            cells.push(div);
+        }
+
+        // Populate
+        CONFIG.sora.forEach(c => createCell('sora', c.src, c.scene));
+        CONFIG.root.forEach(c => createCell('root', c.src, c.scene));
+        CONFIG.mj.forEach((src, i) => {
+            const match = src.match(/\/([^\/]+)_(\d)\.mp4$/) || src.match(/\/([^\/]+)\.mp4$/);
+            const name = match ? match[1].substring(0, 15) : `CLIP_${i}`;
+            createCell('mj', src, name);
+        });
+
+        // SHIELD MODE MAPPING
+        function updateShieldLayout() {
+            const isShield = container.classList.contains('shield-mode');
+            // Reset lines
+            while (svgLayer.firstChild) svgLayer.removeChild(svgLayer.firstChild);
+
+            if (!isShield) {
+                cells.forEach(c => {
+                    c.style.transform = ''; c.style.top = ''; c.style.left = '';
+                });
+                return;
+            }
+
+            // Circular Layout
+            const soraCells = cells.filter(c => c.classList.contains('type-sora'));
+            const rootCells = cells.filter(c => c.classList.contains('type-root'));
+            const mjCells = cells.filter(c => c.classList.contains('type-mj'));
+
+            // CENTER: SORA[0]
+            if (soraCells[0]) {
+                soraCells[0].style.transform = 'translate(-50%, -50%) scale(1.6)';
+                soraCells[0].style.top = '50%'; soraCells[0].style.left = '50%';
+                soraCells[0].style.zIndex = '500';
+                soraCells[0].classList.add('center-piece');
+            }
+
+            distributeRing(soraCells.slice(1), 180, true);
+            distributeRing(rootCells, 300, true);
+            distributeRing(mjCells, 420, false);
+        }
+
+        function distributeRing(items, radius, drawLines) {
+            const count = items.length;
+            const step = (2 * Math.PI) / count;
+            items.forEach((item, i) => {
+                const angle = i * step - (Math.PI / 2);
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
+
+                // Layout (Relative to center via CSS absolute + translate)
+                item.style.top = '50%'; item.style.left = '50%';
+                item.style.transform = `translate(${x}px, ${y}px)`;
+
+                // Draw Lines to Center
+                if (drawLines) {
+                    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    // SVG coord space is 0,0 at top left. Center is 50%, 50%
+                    // We need screen coords... simpler to center SVG at 0,0 and translate lines
+                    // Actually easier: SVG is w/h 100%. Center is window.innerWidth/2
+                    const cx = window.innerWidth / 2;
+                    const cy = window.innerHeight / 2;
+                    line.setAttribute('x1', cx); line.setAttribute('y1', cy);
+                    line.setAttribute('x2', cx + x); line.setAttribute('y2', cy + y);
+                    svgLayer.appendChild(line);
+                }
+            });
+        }
+
+        // CONTROLS
+        document.getElementById('view-toggle').addEventListener('click', toggleMode);
+
+        function toggleMode() {
+            container.classList.toggle('grid-mode');
+            container.classList.toggle('shield-mode');
+            updateShieldLayout();
+            // Clear focus
+            document.querySelectorAll('.focused').forEach(c => c.classList.remove('focused'));
+        }
+
+        document.getElementById('btn-spin').addEventListener('click', (e) => {
+            container.classList.toggle('spinning');
+            e.target.classList.toggle('active');
+        });
+
+        document.getElementById('btn-lines').addEventListener('click', (e) => {
+            svgLayer.style.display = svgLayer.style.display === 'none' ? 'block' : 'none';
+            e.target.classList.toggle('active');
+        });
+
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            container.classList.remove('spinning');
+            document.querySelectorAll('.focused').forEach(c => c.classList.remove('focused'));
+            if (container.classList.contains('shield-mode')) toggleMode();
+        });
+
+        // DIRECTOR MODE
+        let currentSceneIndex = 0;
+        const scenes = ['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9'];
+        const statusDiv = document.querySelector('.status');
+        const ekDisplay = document.getElementById('ekphrasis-display');
+
+        function highlightScene(sceneId) {
+            document.querySelectorAll('.clip-cell').forEach(el => el.classList.remove('active'));
+            const strictMatch = new RegExp(`^${sceneId}|\\/${sceneId}|_${sceneId}_`, 'i');
+            cells.forEach(el => {
+                if (strictMatch.test(el.dataset.label) || el.dataset.label.includes(sceneId)) el.classList.add('active');
+            });
+        }
+
+        function updateEkphrasis(sceneId) {
+            const descriptions = {
+                'C1': "THE ENTRANCE: The Hero emerges from the Thousand Faces.",
+                'C2': "THE PLAIN: Low-resolution landscape, high-resolution intent.",
+                'C3': "THE VOICE: A sound from the air, proving the cause was just.",
+                'C4': "SACRIFICE: Ritual pieties vs. the shining metal truth.",
+                'C5': "THE CAMP: Barbed wire enclosed an arbitrary spot.",
+                'C6': "THE EXECUTION: The mass and majesty of the world, dying.",
+                'C7': "DANCE: Sweet limbs moving, but on a weed-choked field.",
+                'C8': "THE URCHIN: Aimless and alone in the vacant lot.",
+                'C9': "THE ARMORER: The Shield is forged; the bead is ironed."
+            };
+            ekDisplay.innerHTML = `<span class="ek-title">EKPHRASIS // ${sceneId}</span><span class="ek-text">${descriptions[sceneId]}</span>`;
+        }
+
+        setInterval(() => {
+            const sceneId = scenes[currentSceneIndex];
+            highlightScene(sceneId); updateEkphrasis(sceneId);
+            currentSceneIndex = (currentSceneIndex + 1) % scenes.length;
+        }, 4000);
+
+        // Initial state
+        highlightScene('C1'); updateEkphrasis('C1');
+        window.addEventListener('resize', () => { if (container.classList.contains('shield-mode')) updateShieldLayout(); });
+
+    </script>
+</body>
+
+</html>

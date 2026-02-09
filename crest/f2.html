@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>The Hephaestus Protocol: Interactive Forge</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap"
+        rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --bronze: #cd7f32;
+            --gold: #ffd700;
+            --silver: #c0c0c0;
+            --iron: #434b4d;
+            --void: #09090b;
+            --panel: #18181b;
+            --input: #27272a;
+        }
+
+        body {
+            font-family: 'Playfair Display', serif;
+            background-color: var(--void);
+            color: #e2e8f0;
+            overflow: hidden;
+            /* Prevent body scroll, handle in containers */
+        }
+
+        .cinzel {
+            font-family: 'Cinzel', serif;
+        }
+
+        .mono {
+            font-family: 'Space Mono', monospace;
+        }
+
+        /* 3D Scene Setup */
+        .scene-container {
+            perspective: 1200px;
+            overflow: visible;
+        }
+
+        .shield-pivot {
+            transform-style: preserve-3d;
+            transition: transform 0.1s linear;
+            /* Smooth drag */
+            cursor: grab;
+        }
+
+        .shield-pivot:active {
+            cursor: grabbing;
+        }
+
+        /* The Shield Disc */
+        .shield-layer {
+            transition: filter 0.3s ease, stroke-width 0.3s ease;
+            transform-origin: center;
+        }
+
+        .shield-layer:hover {
+            filter: brightness(1.3);
+            stroke: white;
+            stroke-width: 2px;
+        }
+
+        .shield-layer.active {
+            filter: brightness(1.5) drop-shadow(0 0 15px var(--gold));
+            stroke: var(--gold);
+            stroke-width: 3px;
+        }
+
+        /* UI Panel Styling */
+        .glass-panel {
+            background: rgba(24, 24, 27, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .input-field {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(205, 127, 50, 0.3);
+            color: #e2e8f0;
+            transition: all 0.3s ease;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--gold);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.2);
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #000;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Animations */
+        @keyframes float {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            .scene-container {
+                perspective: 800px;
+            }
+
+            .mobile-stack {
+                flex-direction: column;
+            }
+
+            .mobile-h-half {
+                height: 45vh;
+            }
+
+            .mobile-h-auto {
+                height: auto;
+            }
+        }
+    </style>
+</head>
+
+<body class="h-screen w-full flex flex-col md:flex-row">
+
+    <!-- LEFT: THE FORGE (Visual) -->
+    <section
+        class="relative w-full md:w-1/2 h-1/2 md:h-full bg-gradient-to-b from-slate-900 to-black flex flex-col items-center justify-center overflow-hidden border-r border-white/10 scene-container">
+
+        <!-- Background Grid -->
+        <div class="absolute inset-0 opacity-20"
+            style="background-image: radial-gradient(#444 1px, transparent 1px); background-size: 30px 30px;">
+        </div>
+
+        <!-- Mode Toggle -->
+        <div class="absolute top-6 z-20 flex gap-2">
+            <button id="btn-achilles"
+                class="px-4 py-2 text-xs cinzel font-bold border border-amber-700 bg-amber-900/40 text-amber-200 rounded hover:bg-amber-800 transition-colors uppercase tracking-widest shadow-[0_0_15px_rgba(205,127,50,0.3)]">
+                Shield of Achilles
+            </button>
+            <button id="btn-aeneas"
+                class="px-4 py-2 text-xs cinzel font-bold border border-slate-700 bg-slate-900/40 text-slate-400 rounded hover:bg-slate-800 transition-colors uppercase tracking-widest">
+                Shield of Aeneas
+            </button>
+        </div>
+
+        <!-- 3D Pivot Container -->
+        <div id="shield-pivot" class="shield-pivot w-[300px] h-[300px] md:w-[500px] md:h-[500px] relative">
+            <svg viewBox="0 0 500 500" class="w-full h-full drop-shadow-2xl" id="shield-svg">
+                <defs>
+                    <!-- Metallurgical Gradients -->
+                    <radialGradient id="grad-bronze" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%" stop-color="#8B4513" />
+                        <stop offset="100%" stop-color="#5c2e08" />
+                    </radialGradient>
+                    <radialGradient id="grad-gold" cx="50%" cy="50%" r="50%">
+                        <stop offset="30%" stop-color="#ffd700" />
+                        <stop offset="100%" stop-color="#b8860b" />
+                    </radialGradient>
+                    <radialGradient id="grad-silver" cx="50%" cy="50%" r="50%">
+                        <stop offset="20%" stop-color="#e2e8f0" />
+                        <stop offset="100%" stop-color="#64748b" />
+                    </radialGradient>
+                    <radialGradient id="grad-ocean" cx="50%" cy="50%" r="50%">
+                        <stop offset="85%" stop-color="#1e3a8a" />
+                        <stop offset="100%" stop-color="#020617" />
+                    </radialGradient>
+                    <filter id="glow">
+                        <feGaussianBlur stdDeviation="2.5" result="coloredBlur" />
+                        <feMerge>
+                            <feMergeNode in="coloredBlur" />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                    </filter>
+                </defs>
+                <g id="shield-layers-group"></g>
+            </svg>
+        </div>
+
+        <!-- Drag Hint -->
+        <div class="absolute bottom-8 flex items-center gap-2 text-white/30 text-xs mono">
+            <i data-lucide="move-3d" class="w-4 h-4"></i>
+            <span>DRAG TO ROTATE // CLICK RINGS TO INJECT CONTEXT</span>
+        </div>
+    </section>
+
+    <!-- RIGHT: THE SCRIBE (Functional) -->
+    <section
+        class="w-full md:w-1/2 h-1/2 md:h-full bg-zinc-950 text-zinc-300 flex flex-col relative border-t md:border-t-0 md:border-l border-white/10 shadow-2xl z-10">
+
+        <!-- Header -->
+        <div class="p-6 border-b border-white/5 bg-zinc-900/50 backdrop-blur">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h2 class="text-xl cinzel text-amber-500 font-bold tracking-wider">Operational Ecology</h2>
+                    <p id="system-status" class="text-[10px] mono text-emerald-500/80 mt-1">> SYSTEM ONLINE. WAITING FOR
+                        INPUT.</p>
+                </div>
+                <div class="text-right">
+                    <h1 id="shield-title" class="text-sm font-bold text-white/60 uppercase tracking-[0.2em]">Mundus in
+                        Aere</h1>
+                    <span id="current-layer-name" class="text-xs text-amber-700 block mt-1">Select a Layer</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Container (Scrollable) -->
+        <div class="flex-grow overflow-y-auto p-6 space-y-8 relative">
+
+            <!-- Dynamic Form Area -->
+            <div id="form-container" class="fade-in">
+                <!-- Content injected via JS -->
+                <div class="flex flex-col items-center justify-center h-40 text-center opacity-40">
+                    <i data-lucide="hammer" class="w-12 h-12 mb-4 text-amber-700"></i>
+                    <p class="cinzel text-sm">Select a Ring to Begin Fabrication</p>
+                </div>
+            </div>
+
+            <!-- The Ledger (History) -->
+            <div class="mt-12 pt-8 border-t border-white/10">
+                <h3 class="text-xs font-bold text-zinc-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <i data-lucide="scroll-text" class="w-3 h-3"></i>
+                    Context Ledger
+                </h3>
+                <div id="ledger-list" class="space-y-3">
+                    <!-- History items injected here -->
+                </div>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- TEMPLATES -->
+    <template id="tpl-generic-form">
+        <div class="bg-zinc-900/80 border border-zinc-800 p-5 rounded-lg shadow-lg relative overflow-hidden group">
+            <div class="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity">
+                <i data-lucide="file-signature" class="w-16 h-16 text-white"></i>
+            </div>
+
+            <div class="mb-4">
+                <h3 class="text-amber-500 font-bold cinzel text-lg form-title">Form Title</h3>
+                <p class="text-xs text-zinc-500 mono form-subtitle">Protocol ID: #001</p>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-[10px] uppercase tracking-wider text-zinc-400 mb-1 field-1-label">Field
+                        1</label>
+                    <input type="text"
+                        class="field-1-input w-full p-2 text-sm bg-black/50 border border-zinc-700 rounded text-white focus:border-amber-600 focus:outline-none transition-colors"
+                        placeholder="...">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase tracking-wider text-zinc-400 mb-1 field-2-label">Field
+                        2</label>
+                    <textarea
+                        class="field-2-input w-full p-2 text-sm bg-black/50 border border-zinc-700 rounded text-white focus:border-amber-600 focus:outline-none transition-colors h-24 resize-none"
+                        placeholder="..."></textarea>
+                </div>
+
+                <button
+                    class="submit-btn w-full py-3 bg-amber-900/20 hover:bg-amber-800/40 border border-amber-800/50 text-amber-200 text-xs font-bold uppercase tracking-widest transition-all hover:shadow-[0_0_20px_rgba(205,127,50,0.2)] flex items-center justify-center gap-2 group-btn">
+                    <span>Forge Document</span>
+                    <i data-lucide="hammer" class="w-3 h-3 group-btn-hover:rotate-45 transition-transform"></i>
+                </button>
+            </div>
+        </div>
+    </template>
+
+    <script>
+        // --- CONFIGURATION ---
+        const DATA = {
+            achilles: {
+                title: "Mundus in Aere",
+                layers: [
+                    {
+                        id: 'rim', r: 240, name: "Oceanus Rim", color: "#1e3a8a",
+                        form: { title: "Boundary Definition Protocol", sub: "Limit of Simulation", f1: "River Velocity (Flow Rate)", f2: "Sealing Mantra (Text)", ph1: "e.g., Infinite Knots", ph2: "Describe the recursive boundary..." }
+                    },
+                    {
+                        id: 'outer', r: 200, name: "The Dance Floor", color: "#cd7f32",
+                        form: { title: "Choreography Logic", sub: "Kinetic Geometry", f1: "Dancer Count", f2: "Pattern Algorithm", ph1: "e.g., 12 Youths", ph2: "Describe the motion (Tumbling, Spinning)..." }
+                    },
+                    {
+                        id: 'mid', r: 150, name: "Fields & Vineyards", color: "#ffd700",
+                        form: { title: "Agricultural Output Schema", sub: "Metabolic Engine", f1: "Crop Yield (Bushels)", f2: "Harvest Song Lyrics", ph1: "e.g., 5000 units of honey-sweet fruit", ph2: "The Linos song lyrics..." }
+                    },
+                    {
+                        id: 'inner', r: 100, name: "Binary Cities", color: "#c0c0c0",
+                        form: { title: "Civil/Martial Registry", sub: "Select Mode: Peace/War", f1: "Petitioner / Commander", f2: "Lawsuit Plea / Ambush Strategy", ph1: "Name of Agent", ph2: "Detail the conflict or contract..." }
+                    },
+                    {
+                        id: 'core', r: 50, name: "Celestial Core", color: "#ffd700",
+                        form: { title: "Cosmological Constants", sub: "System Clock", f1: "Star Cluster ID", f2: "Time Dilation Factor", ph1: "e.g., Pleiades", ph2: "Set the rotation speed of the heavens..." }
+                    }
+                ]
+            },
+            aeneas: {
+                title: "Imperium sine Fine",
+                layers: [
+                    {
+                        id: 'rim', r: 240, name: "Conquered Rivers", color: "#1e3a8a",
+                        form: { title: "Imperial Annexation Form", sub: "Territorial Expansion", f1: "River Name", f2: "Engineering Solution (Bridge/Dam)", ph1: "e.g., The Rhine", ph2: "How is nature subdued?" }
+                    },
+                    {
+                        id: 'outer', r: 200, name: "Future History", color: "#434b4d",
+                        form: { title: "Propaganda Injection", sub: "Teleological Engine", f1: "Future Event Year", f2: "Political Narrative", ph1: "e.g., 29 BC", ph2: "Describe the triumph..." }
+                    },
+                    {
+                        id: 'mid', r: 150, name: "The Capitol", color: "#c0c0c0",
+                        form: { title: "Senate Decree", sub: "Crisis Management", f1: "Senator Name", f2: "Emergency Measure", ph1: "Cato / Catiline", ph2: "Laws regarding the Gauls..." }
+                    },
+                    {
+                        id: 'inner', r: 100, name: "Romulus & Remus", color: "#cd7f32",
+                        form: { title: "Foundation Myth Generator", sub: "Primal Scene", f1: "Wolf Mother Status", f2: "Blood Sacrifice Details", ph1: "Lactation Rate", ph2: "Details of the fratricide..." }
+                    },
+                    {
+                        id: 'core', r: 50, name: "Battle of Actium", color: "#ffd700",
+                        form: { title: "Theological Conflict", sub: "East vs West", f1: "Deity Summoned", f2: "Naval Manuever", ph1: "Apollo / Anubis", ph2: "Flanking strategy..." }
+                    }
+                ]
+            }
+        };
+
+        // --- STATE ---
+        let state = {
+            mode: 'achilles',
+            rotation: { x: 20, y: 0 },
+            isDragging: false,
+            lastMouse: { x: 0, y: 0 },
+            selectedLayer: null
+        };
+
+        // --- DOM ELEMENTS ---
+        const shieldSvgGroup = document.getElementById('shield-layers-group');
+        const shieldPivot = document.getElementById('shield-pivot');
+        const formContainer = document.getElementById('form-container');
+        const template = document.getElementById('tpl-generic-form');
+        const ledgerList = document.getElementById('ledger-list');
+        const systemStatus = document.getElementById('system-status');
+        const shieldTitle = document.getElementById('shield-title');
+        const currentLayerName = document.getElementById('current-layer-name');
+
+        // --- RENDER LOGIC ---
+
+        function initIcons() {
+            lucide.createIcons();
+        }
+
+        function renderShield() {
+            shieldSvgGroup.innerHTML = '';
+            const layers = DATA[state.mode].layers;
+
+            // Render from outside in
+            layers.forEach(layer => {
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute("cx", "250");
+                circle.setAttribute("cy", "250");
+                circle.setAttribute("r", layer.r);
+                circle.setAttribute("fill", getGradient(layer.id, state.mode));
+                circle.setAttribute("class", "shield-layer cursor-pointer");
+                circle.setAttribute("stroke", "rgba(255,255,255,0.1)");
+                circle.setAttribute("stroke-width", "1");
+
+                // Click Handler
+                circle.addEventListener('pointerdown', (e) => e.stopPropagation()); // Prevent drag start on strict click
+                circle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (!state.isDragging) selectLayer(layer);
+                });
+
+                shieldSvgGroup.appendChild(circle);
+            });
+            updateRotation();
+        }
+
+        function getGradient(layerId, mode) {
+            if (layerId === 'rim') return "url(#grad-ocean)";
+            if (mode === 'achilles') {
+                if (layerId === 'outer') return "url(#grad-bronze)";
+                if (layerId === 'mid') return "url(#grad-gold)";
+                if (layerId === 'inner') return "url(#grad-silver)";
+                if (layerId === 'core') return "url(#grad-gold)";
+            } else {
+                if (layerId === 'outer') return "#2d3748"; // Iron
+                if (layerId === 'mid') return "url(#grad-silver)";
+                if (layerId === 'inner') return "url(#grad-bronze)";
+                if (layerId === 'core') return "url(#grad-gold)";
+            }
+            return "#333";
+        }
+
+        function updateRotation() {
+            shieldPivot.style.transform = `rotateX(${state.rotation.x}deg) rotateZ(${state.rotation.y}deg)`;
+        }
+
+        // --- INTERACTION LOGIC ---
+
+        function selectLayer(layer) {
+            state.selectedLayer = layer;
+
+            // Visual feedback on shield
+            document.querySelectorAll('.shield-layer').forEach(el => el.classList.remove('active'));
+            // Find the clicked circle (simple implementation: redraw or query by radius logic)
+            // Ideally we map DOM elements to data, but for this simpler version:
+            const index = DATA[state.mode].layers.findIndex(l => l.id === layer.id);
+            shieldSvgGroup.children[index].classList.add('active');
+
+            // Text Update
+            currentLayerName.innerText = layer.name;
+            currentLayerName.classList.add('text-amber-400');
+
+            // Form Injection
+            renderForm(layer);
+        }
+
+        function renderForm(layer) {
+            formContainer.innerHTML = '';
+            const clone = template.content.cloneNode(true);
+            const formData = layer.form;
+
+            clone.querySelector('.form-title').innerText = formData.title;
+            clone.querySelector('.form-subtitle').innerText = formData.sub;
+
+            clone.querySelector('.field-1-label').innerText = formData.f1;
+            clone.querySelector('.field-1-input').placeholder = formData.ph1;
+
+            clone.querySelector('.field-2-label').innerText = formData.f2;
+            clone.querySelector('.field-2-input').placeholder = formData.ph2;
+
+            // Submit Handler
+            const btn = clone.querySelector('.submit-btn');
+            const f1Input = clone.querySelector('.field-1-input');
+            const f2Input = clone.querySelector('.field-2-input');
+
+            btn.onclick = () => {
+                if (!f1Input.value && !f2Input.value) return; // Simple validation
+
+                // Animation
+                btn.innerHTML = `<span>Forging...</span> <i data-lucide="loader" class="w-3 h-3 animate-spin"></i>`;
+                lucide.createIcons();
+
+                setTimeout(() => {
+                    addToLedger(layer.name, f1Input.value || "Redacted", f2Input.value || "Standard Protocol");
+                    btn.innerHTML = `<span>Forged</span> <i data-lucide="check" class="w-3 h-3"></i>`;
+                    btn.classList.add('bg-green-900/30', 'text-green-400', 'border-green-800');
+                    lucide.createIcons();
+                    systemStatus.innerText = "> DATA INTEGRATED INTO SHIELD TOPOLOGY.";
+                }, 800);
+            };
+
+            formContainer.appendChild(clone);
+            initIcons();
+        }
+
+        function addToLedger(layer, author, content) {
+            const item = document.createElement('div');
+            item.className = "text-xs border-l-2 border-amber-600 pl-3 py-1 fade-in bg-white/5 rounded-r p-2";
+
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            item.innerHTML = `
+                <div class="flex justify-between text-zinc-500 mb-1">
+                    <span class="uppercase font-bold text-[10px]">${layer}</span>
+                    <span class="mono text-[9px]">${time}</span>
+                </div>
+                <div class="text-amber-100 font-serif italic">"${content.substring(0, 40)}${content.length > 40 ? '...' : ''}"</div>
+                <div class="text-zinc-600 text-[10px] mt-1 mono">Agent: ${author}</div>
+            `;
+
+            ledgerList.prepend(item);
+        }
+
+        // --- DRAG LOGIC ---
+        const scene = document.querySelector('.scene-container');
+
+        scene.addEventListener('pointerdown', (e) => {
+            state.isDragging = true;
+            state.lastMouse = { x: e.clientX, y: e.clientY };
+            shieldPivot.style.transition = 'none'; // Instant follow
+        });
+
+        window.addEventListener('pointermove', (e) => {
+            if (!state.isDragging) return;
+            e.preventDefault();
+
+            const deltaX = e.clientX - state.lastMouse.x;
+            const deltaY = e.clientY - state.lastMouse.y;
+
+            state.rotation.y += deltaX * 0.5;
+            state.rotation.x -= deltaY * 0.5;
+
+            // Clamp X rotation to avoid flipping upside down too awkwardly
+            state.rotation.x = Math.max(-60, Math.min(60, state.rotation.x));
+
+            updateRotation();
+            state.lastMouse = { x: e.clientX, y: e.clientY };
+        });
+
+        window.addEventListener('pointerup', () => {
+            state.isDragging = false;
+            shieldPivot.style.transition = 'transform 0.5s ease-out'; // Inertia reset feel
+        });
+
+        // --- SWITCH LOGIC ---
+        document.getElementById('btn-achilles').addEventListener('click', () => {
+            state.mode = 'achilles';
+            shieldTitle.innerText = DATA.achilles.title;
+            updateUITheme('achilles');
+            renderShield();
+        });
+
+        document.getElementById('btn-aeneas').addEventListener('click', () => {
+            state.mode = 'aeneas';
+            shieldTitle.innerText = DATA.aeneas.title;
+            updateUITheme('aeneas');
+            renderShield();
+        });
+
+        function updateUITheme(mode) {
+            const ba = document.getElementById('btn-achilles');
+            const be = document.getElementById('btn-aeneas');
+
+            if (mode === 'achilles') {
+                ba.classList.add('border-amber-700', 'text-amber-200');
+                ba.classList.remove('border-slate-700', 'text-slate-400');
+                be.classList.remove('border-amber-700', 'text-amber-200');
+            } else {
+                be.classList.add('border-slate-400', 'text-white');
+                ba.classList.remove('border-amber-700', 'text-amber-200');
+                ba.classList.add('border-slate-700', 'text-slate-400');
+            }
+            // Clear current form
+            formContainer.innerHTML = '<div class="flex flex-col items-center justify-center h-40 text-center opacity-40"><i data-lucide="hammer" class="w-12 h-12 mb-4 text-amber-700"></i><p class="cinzel text-sm">Select a Ring to Begin Fabrication</p></div>';
+            initIcons();
+            currentLayerName.innerText = "Select a Layer";
+        }
+
+        // --- INIT ---
+        renderShield();
+        initIcons();
+
+        // Auto-rotate slowly when not interacting
+        let autoRotate = setInterval(() => {
+            if (!state.isDragging) {
+                state.rotation.y += 0.1;
+                updateRotation();
+            }
+        }, 30);
+
+    </script>
+</body>
+
+</html>

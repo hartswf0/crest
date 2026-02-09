@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Auden Shield — Scene Theater</title>
+    <style>
+        :root {
+            --bg: #0a0a0c;
+            --surface: #141418;
+            --border: rgba(255, 255, 255, 0.08);
+            --text: #e8e6e3;
+            --muted: rgba(255, 255, 255, 0.5);
+            --accent: #4a9eff;
+            --accent2: #ff6b4a;
+            --gold: #d4a853;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            padding: 16px 24px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .title {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            color: var(--gold);
+            text-transform: uppercase;
+        }
+
+        /* Scene Nav */
+        .scene-nav {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .scene-btn {
+            padding: 8px 14px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .scene-btn:hover {
+            border-color: var(--accent);
+            color: var(--text);
+        }
+
+        .scene-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #000;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .play-btn {
+            padding: 10px 20px;
+            background: var(--accent2);
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .play-btn:hover {
+            filter: brightness(1.1);
+        }
+
+        /* Main Layout */
+        .main {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            padding: 20px;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        /* Video Grid */
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .video-column {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .column-header {
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .column-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .column-title.root {
+            color: var(--accent);
+        }
+
+        .column-title.sora {
+            color: #a855f7;
+        }
+
+        .column-title.mj {
+            color: var(--accent2);
+        }
+
+        .clip-count {
+            font-size: 10px;
+            color: var(--muted);
+            background: var(--bg);
+            padding: 4px 8px;
+            border-radius: 999px;
+        }
+
+        .video-stack {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .video-wrapper {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .video-wrapper video {
+            width: 100%;
+            display: block;
+        }
+
+        .video-label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 6px 10px;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+            font-size: 9px;
+            color: var(--muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .no-video {
+            padding: 40px 20px;
+            text-align: center;
+            color: var(--muted);
+            font-size: 12px;
+            font-style: italic;
+        }
+
+        /* Text Panel */
+        .text-panel {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .ceremony-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .scene-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--gold);
+        }
+
+        .scene-type {
+            font-size: 10px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-top: 4px;
+        }
+
+        .ceremony-flow {
+            font-size: 11px;
+            color: var(--accent);
+            background: rgba(74, 158, 255, 0.1);
+            padding: 8px 12px;
+            border-radius: 6px;
+            max-width: 300px;
+            text-align: right;
+        }
+
+        .lines-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 10px;
+        }
+
+        .line-card {
+            padding: 12px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+
+        .line-id {
+            font-size: 10px;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .line-text {
+            font-size: 14px;
+            line-height: 1.5;
+            font-style: italic;
+            color: var(--text);
+        }
+
+        .line-meta {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+            flex-wrap: wrap;
+        }
+
+        .line-tag {
+            font-size: 9px;
+            padding: 3px 7px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--muted);
+        }
+
+        .line-tag.PRODUCE {
+            background: rgba(34, 197, 94, 0.15);
+            color: #22c55e;
+        }
+
+        .line-tag.MAINTAIN {
+            background: rgba(74, 158, 255, 0.15);
+            color: #4a9eff;
+        }
+
+        .line-tag.REPAIR {
+            background: rgba(255, 107, 74, 0.15);
+            color: #ff6b4a;
+        }
+
+        .line-tag.TRANSFORM {
+            background: rgba(168, 85, 247, 0.15);
+            color: #a855f7;
+        }
+
+        @media (max-width: 900px) {
+            .video-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .video-stack {
+                max-height: 250px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div class="title">Auden Shield — Scene Theater</div>
+        <div class="scene-nav" id="scene-nav"></div>
+        <div class="controls">
+            <button class="play-btn" id="play-all">▶ PLAY ALL</button>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="video-grid">
+            <div class="video-column">
+                <div class="column-header">
+                    <span class="column-title root">ROOT</span>
+                    <span class="clip-count" id="root-count">0 clips</span>
+                </div>
+                <div class="video-stack" id="root-videos"></div>
+            </div>
+            <div class="video-column">
+                <div class="column-header">
+                    <span class="column-title sora">SORA</span>
+                    <span class="clip-count" id="sora-count">0 clips</span>
+                </div>
+                <div class="video-stack" id="sora-videos"></div>
+            </div>
+            <div class="video-column">
+                <div class="column-header">
+                    <span class="column-title mj">MIDJOURNEY</span>
+                    <span class="clip-count" id="mj-count">0 clips</span>
+                </div>
+                <div class="video-stack" id="mj-videos"></div>
+            </div>
+        </div>
+
+        <div class="text-panel" id="text-panel"></div>
+    </div>
+
+    <script>
+        // Scene data (from scenes.html)
+        const CHAPELS = [
+            {
+                id: "C1", name: "Expectation I: Pastoral", type: "THETIS REFRAIN",
+                ceremony: "ENTRY: Thetis looks → CHANT: vines, cities, ships → TURN: 'But there' → SEAL: wilderness/lead",
+                lines: [
+                    { id: "L01", text: "She looked over his shoulder", fn: "PRODUCE" },
+                    { id: "L02", text: "For vines and olive trees,", fn: "MAINTAIN" },
+                    { id: "L03", text: "Marble well-governed cities", fn: "MAINTAIN" },
+                    { id: "L04", text: "And ships upon untamed seas,", fn: "MAINTAIN" },
+                    { id: "L05", text: "But there on the shining metal", fn: "TRANSFORM" },
+                    { id: "L06", text: "His hands had put instead", fn: "TRANSFORM" },
+                    { id: "L07", text: "An artificial wilderness", fn: "PRODUCE" },
+                    { id: "L08", text: "And a sky like lead.", fn: "REPAIR" }
+                ]
+            },
+            {
+                id: "C2", name: "Scene I: The Plain", type: "EKPHRASIS",
+                ceremony: "ENTRY: bare plain → CHANT: multitude gathers → TURN: million eyes → SEAL: waiting for a sign",
+                lines: [
+                    { id: "L09", text: "A plain without a feature, bare and brown,", fn: "PRODUCE" },
+                    { id: "L10", text: "No blade of grass, no sign of neighborhood,", fn: "MAINTAIN" },
+                    { id: "L11", text: "Nothing to eat and nowhere to sit down,", fn: "MAINTAIN" },
+                    { id: "L12", text: "Yet, congregated on its blankness, stood", fn: "PRODUCE" },
+                    { id: "L13", text: "An unintelligible multitude,", fn: "PRODUCE" },
+                    { id: "L14", text: "A million eyes, a million boots in line,", fn: "MAINTAIN" },
+                    { id: "L15", text: "Without expression, waiting for a sign.", fn: "REPAIR" }
+                ]
+            },
+            {
+                id: "C3", name: "Scene II: The Voice", type: "EKPHRASIS",
+                ceremony: "ENTRY: disembodied voice → CHANT: statistics/belief → TURN: marched away → SEAL: grief",
+                lines: [
+                    { id: "L16", text: "Out of the air a voice without a face", fn: "PRODUCE" },
+                    { id: "L17", text: "Proved by statistics that some cause was just", fn: "TRANSFORM" },
+                    { id: "L18", text: "In tones as dry and level as the place:", fn: "MAINTAIN" },
+                    { id: "L19", text: "No one was cheered and nothing was discussed;", fn: "MAINTAIN" },
+                    { id: "L20", text: "Column by column in a cloud of dust", fn: "PRODUCE" },
+                    { id: "L21", text: "They marched away enduring a belief", fn: "TRANSFORM" },
+                    { id: "L22", text: "Whose logic brought them, somewhere else, to grief.", fn: "REPAIR" }
+                ]
+            },
+            {
+                id: "C4", name: "Expectation II: Sacrifice", type: "THETIS REFRAIN",
+                ceremony: "ENTRY: Thetis looks again → CHANT: ritual pieties → TURN: 'But there' → SEAL: another scene",
+                lines: [
+                    { id: "L23", text: "She looked over his shoulder", fn: "PRODUCE" },
+                    { id: "L24", text: "For ritual pieties,", fn: "MAINTAIN" },
+                    { id: "L25", text: "White flower-garlanded heifers,", fn: "MAINTAIN" },
+                    { id: "L26", text: "Libation and sacrifice,", fn: "MAINTAIN" },
+                    { id: "L27", text: "But there on the shining metal", fn: "TRANSFORM" },
+                    { id: "L28", text: "Where the altar should have been,", fn: "TRANSFORM" },
+                    { id: "L29", text: "She saw by his flickering forge-light", fn: "PRODUCE" },
+                    { id: "L30", text: "Quite another scene.", fn: "REPAIR" }
+                ]
+            },
+            {
+                id: "C5", name: "Scene III: The Camp", type: "EKPHRASIS",
+                ceremony: "ENTRY: barbed wire → CHANT: officials/folk → TURN: three figures bound → SEAL: in the ground",
+                lines: [
+                    { id: "L31", text: "Barbed wire enclosed an arbitrary spot", fn: "PRODUCE" },
+                    { id: "L32", text: "Where bored officials lounged (one cracked a joke)", fn: "MAINTAIN" },
+                    { id: "L33", text: "And sentries sweated for the day was hot:", fn: "MAINTAIN" },
+                    { id: "L34", text: "A crowd of ordinary decent folk", fn: "PRODUCE" },
+                    { id: "L35", text: "Watched from without and neither moved nor spoke", fn: "MAINTAIN" },
+                    { id: "L36", text: "As three pale figures were led forth and bound", fn: "TRANSFORM" },
+                    { id: "L37", text: "To three posts driven upright in the ground.", fn: "REPAIR" }
+                ]
+            },
+            {
+                id: "C6", name: "Scene IV: The Execution", type: "EKPHRASIS",
+                ceremony: "ENTRY: mass/majesty → CHANT: weight/same → TURN: no help came → SEAL: died before they died",
+                lines: [
+                    { id: "L38", text: "The mass and majesty of this world, all", fn: "PRODUCE" },
+                    { id: "L39", text: "That carries weight and always weighs the same", fn: "MAINTAIN" },
+                    { id: "L40", text: "Lay in the hands of others; they were small", fn: "TRANSFORM" },
+                    { id: "L41", text: "And could not hope for help and no help came:", fn: "MAINTAIN" },
+                    { id: "L42", text: "What their foes liked to do was done, their shame", fn: "TRANSFORM" },
+                    { id: "L43", text: "Was all the worst could wish; they lost their pride", fn: "TRANSFORM" },
+                    { id: "L44", text: "And died as men before their bodies died.", fn: "REPAIR" }
+                ]
+            },
+            {
+                id: "C7", name: "Expectation III: Dance", type: "THETIS REFRAIN",
+                ceremony: "ENTRY: Thetis looks → CHANT: athletes/dance → TURN: 'But there' → SEAL: weed-choked field",
+                lines: [
+                    { id: "L45", text: "She looked over his shoulder", fn: "PRODUCE" },
+                    { id: "L46", text: "For athletes at their games,", fn: "MAINTAIN" },
+                    { id: "L47", text: "Men and women in a dance", fn: "MAINTAIN" },
+                    { id: "L48", text: "Moving their sweet limbs", fn: "MAINTAIN" },
+                    { id: "L49", text: "Quick, quick, to music,", fn: "MAINTAIN" },
+                    { id: "L50", text: "But there on the shining shield", fn: "TRANSFORM" },
+                    { id: "L51", text: "His hands had set no dancing-floor", fn: "TRANSFORM" },
+                    { id: "L52", text: "But a weed-choked field.", fn: "REPAIR" }
+                ]
+            },
+            {
+                id: "C8", name: "Scene V: The Urchin", type: "EKPHRASIS",
+                ceremony: "ENTRY: ragged urchin → CHANT: vacancy/stone → TURN: axioms of violence → SEAL: never heard/wept",
+                lines: [
+                    { id: "L53", text: "A ragged urchin, aimless and alone,", fn: "PRODUCE" },
+                    { id: "L54", text: "Loitered about that vacancy; a bird", fn: "MAINTAIN" },
+                    { id: "L55", text: "Flew up to safety from his well-aimed stone:", fn: "TRANSFORM" },
+                    { id: "L56", text: "That girls are raped, that two boys knife a third,", fn: "PRODUCE" },
+                    { id: "L57", text: "Were axioms to him, who'd never heard", fn: "MAINTAIN" },
+                    { id: "L58", text: "Of any world where promises were kept,", fn: "TRANSFORM" },
+                    { id: "L59", text: "Or one could weep because another wept.", fn: "REPAIR" }
+                ]
+            },
+            {
+                id: "C9", name: "Coda: The Armorer", type: "CODA",
+                ceremony: "ENTRY: thin-lipped armorer → CHANT: hobbled/dismay → TURN: what god had wrought → SEAL: not live long",
+                lines: [
+                    { id: "L60", text: "The thin-lipped armorer,", fn: "PRODUCE" },
+                    { id: "L61", text: "Hephaestos, hobbled away,", fn: "TRANSFORM" },
+                    { id: "L62", text: "Thetis of the shining breasts", fn: "PRODUCE" },
+                    { id: "L63", text: "Cried out in dismay", fn: "TRANSFORM" },
+                    { id: "L64", text: "At what the god had wrought", fn: "MAINTAIN" },
+                    { id: "L65", text: "To please her son, the strong", fn: "MAINTAIN" },
+                    { id: "L66", text: "Iron-hearted man-slaying Achilles", fn: "PRODUCE" },
+                    { id: "L67", text: "Who would not live long.", fn: "REPAIR" }
+                ]
+            }
+        ];
+
+        // Video asset mappings
+        const ROOT_VIDEOS = {
+            "C1": ["01-02.mp4", "03-04.mp4", "05-06.mp4", "07-08.mp4"],
+            "C2": ["08-09.mp4"]
+        };
+
+        const SORA_VIDEOS = {
+            "C1": ["sora/0000.mp4"],
+            "C2": ["sora/0001.mp4"],
+            "C3": ["sora/0002.mp4"],
+            "C4": ["sora/0003.mp4"],
+            "C7": ["sora/0007.mp4"],
+            "C8": ["sora/0008.mp4"],
+            "C9": ["sora/0009.mp4"]
+        };
+
+        const MJ_VIDEOS = {
+            "C1": [
+                "midjourney_session (4)/C1_Expectation_I_Pastoral_THETIS_REFRAIN_Ceremony_ENTRY_Theti_072e63f1-7ec0-4cf1-af45-addcbf8dc80a_2.mp4",
+                "midjourney_session (4)/C1_Expectation_I_Pastoral_THETIS_REFRAIN_Ceremony_ENTRY_Theti_1b62b871-c890-41aa-b04c-813695088884_0.mp4",
+                "midjourney_session (4)/C1_Expectation_I_Pastoral_THETIS_REFRAIN_Ceremony_ENTRY_Theti_ced1c73d-5323-43cb-8ac9-ba7b49285c3a_2.mp4",
+                "midjourney_session (4)/C1_Expectation_I_Pastoral_THETIS_REFRAIN_Ceremony_ENTRY_Theti_d4b00e54-b9bb-448f-bba6-aef378353569_0.mp4"
+            ],
+            "C2": [
+                "midjourney_session (4)/C2_Scene_I_The_Plain_EKPHRASIS_Ceremony_ENTRY_bare_plain__CHA_655c007b-374d-47ef-85b6-1988c6bce1e4_2.mp4",
+                "midjourney_session (4)/C2_Scene_I_The_Plain_EKPHRASIS_Ceremony_ENTRY_bare_plain__CHA_9b212ae2-976c-4e60-b121-45724fbb75d6_3.mp4",
+                "midjourney_session (4)/C2_Scene_I_The_Plain_EKPHRASIS_Ceremony_ENTRY_bare_plain__CHA_ad4e846e-97f2-4213-9bfa-de6858e65c1c_0.mp4"
+            ],
+            "C3": [
+                "midjourney_session (4)/C3_Scene_II_The_Voice_EKPHRASIS_Ceremony_ENTRY_disembodied_vo_fb09be73-d800-4d49-a18a-b3439db57efe_0.mp4"
+            ],
+            "C4": [
+                "midjourney_session (4)/C4_Expectation_II_Sacrifice_THETIS_REFRAIN_Ceremony_ENTRY_The_39a9b5e8-ea52-4f0a-8401-a1c06323f91f_1.mp4",
+                "midjourney_session (4)/C4_Expectation_II_Sacrifice_THETIS_REFRAIN_Ceremony_ENTRY_The_4b435c87-f863-464b-b179-b3b8f7bb30e5_2.mp4",
+                "midjourney_session (4)/C4_Expectation_II_Sacrifice_THETIS_REFRAIN_Ceremony_ENTRY_The_5a7b20f4-05f2-40ff-8d88-df13e7651253_2.mp4",
+                "midjourney_session (4)/C4_Expectation_II_Sacrifice_THETIS_REFRAIN_Ceremony_ENTRY_The_67028f0f-e60e-49a3-86dd-60958deab5da_0.mp4"
+            ],
+            "C6": [
+                "midjourney_session (4)/C6_Scene_IV_The_Execution_EKPHRASIS_Ceremony_ENTRY_massmajest_a8908dc9-c0f5-46b5-be27-a8f067c97762_0.mp4"
+            ],
+            "C7": [
+                "midjourney_session (4)/C7_Expectation_III_Dance_THETIS_REFRAIN_Ceremony_ENTRY_Thetis_0d923fd1-a639-4267-96fb-95ec572d5a9d_3.mp4"
+            ],
+            "C8": [
+                "midjourney_session (4)/ragged_urchin_boy_aimless_and_alone_loitering_in_a_vacant_urb_3e937364-5a00-4737-8661-aceaf1d7e1c7_0.mp4",
+                "midjourney_session (4)/ragged_urchin_boy_aimless_and_alone_loitering_in_a_vacant_urb_67b60d48-665a-49be-9253-991c316943dc_2.mp4",
+                "midjourney_session (4)/ragged_urchin_boy_aimless_and_alone_loitering_in_a_vacant_urb_67b60d48-665a-49be-9253-991c316943dc_3.mp4",
+                "midjourney_session (4)/ragged_urchin_boy_aimless_and_alone_loitering_in_a_vacant_urb_c5fe4e0e-6969-4908-a57f-b427a728ff5c_2.mp4"
+            ],
+            "C9": [
+                "midjourney_session (4)/C9_Coda_The_Armorer_CODA_Ceremony_ENTRY_thin-lipped_armorer___547f814e-17b4-4e1e-8b80-ea25a6659171_0.mp4",
+                "midjourney_session (4)/C9_Coda_The_Armorer_CODA_Ceremony_ENTRY_thin-lipped_armorer___89a16e21-79d7-4450-b6de-c1e719e7deec_0.mp4",
+                "midjourney_session (4)/thin-lipped_armorer_Hephaestos_hobbled_Thetis_crying_out_in_d_d4338439-f7e5-4a9c-b32e-ff5aca17e9c6_0.mp4",
+                "midjourney_session (4)/thin-lipped_armorer_Hephaestos_hobbled_Thetis_crying_out_in_d_d4338439-f7e5-4a9c-b32e-ff5aca17e9c6_1.mp4"
+            ]
+        };
+
+        let currentScene = "C1";
+        let allVideos = [];
+
+        function init() {
+            // Build scene nav
+            const nav = document.getElementById('scene-nav');
+            CHAPELS.forEach(chapel => {
+                const btn = document.createElement('button');
+                btn.className = 'scene-btn' + (chapel.id === currentScene ? ' active' : '');
+                btn.textContent = chapel.id;
+                btn.title = chapel.name;
+                btn.onclick = () => loadScene(chapel.id);
+                nav.appendChild(btn);
+            });
+
+            // Play button
+            document.getElementById('play-all').onclick = togglePlayAll;
+
+            // Load first scene
+            loadScene('C1');
+        }
+
+        function loadScene(sceneId) {
+            currentScene = sceneId;
+            allVideos = [];
+
+            // Update nav
+            document.querySelectorAll('.scene-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.textContent === sceneId);
+            });
+
+            const chapel = CHAPELS.find(c => c.id === sceneId);
+
+            // Load videos
+            loadVideos('root-videos', 'root-count', ROOT_VIDEOS[sceneId] || []);
+            loadVideos('sora-videos', 'sora-count', SORA_VIDEOS[sceneId] || []);
+            loadVideos('mj-videos', 'mj-count', MJ_VIDEOS[sceneId] || []);
+
+            // Update text panel
+            const panel = document.getElementById('text-panel');
+            panel.innerHTML = `
+                <div class="ceremony-header">
+                    <div>
+                        <div class="scene-title">${chapel.id}: ${chapel.name}</div>
+                        <div class="scene-type">${chapel.type}</div>
+                    </div>
+                    <div class="ceremony-flow">${chapel.ceremony}</div>
+                </div>
+                <div class="lines-grid">
+                    ${chapel.lines.map(line => `
+                        <div class="line-card">
+                            <div class="line-id">${line.id}</div>
+                            <div class="line-text">"${line.text}"</div>
+                            <div class="line-meta">
+                                <span class="line-tag ${line.fn}">${line.fn}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function loadVideos(containerId, countId, videos) {
+            const container = document.getElementById(containerId);
+            const count = document.getElementById(countId);
+
+            count.textContent = videos.length + ' clip' + (videos.length !== 1 ? 's' : '');
+
+            if (videos.length === 0) {
+                container.innerHTML = '<div class="no-video">No video for this scene</div>';
+                return;
+            }
+
+            container.innerHTML = videos.map(src => {
+                const filename = src.split('/').pop();
+                return `
+                    <div class="video-wrapper">
+                        <video src="${src}" loop muted preload="metadata"></video>
+                        <div class="video-label">${filename}</div>
+                    </div>
+                `;
+            }).join('');
+
+            // Collect video elements
+            container.querySelectorAll('video').forEach(v => allVideos.push(v));
+        }
+
+        let isPlaying = false;
+        function togglePlayAll() {
+            const btn = document.getElementById('play-all');
+            isPlaying = !isPlaying;
+
+            allVideos.forEach(v => {
+                if (isPlaying) {
+                    v.currentTime = 0;
+                    v.play();
+                } else {
+                    v.pause();
+                }
+            });
+
+            btn.textContent = isPlaying ? '⏸ PAUSE' : '▶ PLAY ALL';
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

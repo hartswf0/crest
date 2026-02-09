@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Verba Vincula Sunt</title>
+
+    <!-- Fontes -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Lato:wght@300;400;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'parchment': '#f0e6d2',
+                        'ink': '#1a1a1a',
+                        'gold': '#c5a059',
+                        'crimson': '#8a1c1c',
+                        'royal': '#1e3a8a',
+                    },
+                    fontFamily: {
+                        'cinzel': ['"Cinzel"', 'serif'],
+                        'garamond': ['"Cormorant Garamond"', 'serif'],
+                        'sans': ['"Lato"', 'sans-serif'],
+                    },
+                    height: {
+                        'mobile-shield': '35vh',
+                        'mobile-content': '65vh',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Reset & Base */
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+            /* Previne scroll na janela principal */
+            background-color: #111;
+            color: #f0e6d2;
+        }
+
+        /* Canvas de Fundo */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.2;
+            pointer-events: none;
+        }
+
+        /* Layout Grid Principal */
+        .app-layout {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Painel do Brasão (Fixo) */
+        .shield-panel {
+            height: 38vh;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(17, 17, 17, 0.85);
+            border-bottom: 2px solid #c5a059;
+            backdrop-filter: blur(5px);
+            position: relative;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Painel de Conteúdo (Scrollável) */
+        .content-panel {
+            height: 62vh;
+            overflow-y: auto;
+            scroll-behavior: smooth;
+            padding: 20px;
+            background: rgba(20, 20, 20, 0.6);
+        }
+
+        /* O Brasão CSS */
+        .crest-wrapper {
+            width: 180px;
+            height: 220px;
+            position: relative;
+            /* Escala para caber em telas pequenas */
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .crest-shield {
+            width: 100%;
+            height: 100%;
+            /* Formato de Escudo SVG Path */
+            clip-path: path("M90 0 L180 30 V100 C180 160 90 220 90 220 C90 220 0 160 0 100 V30 L90 0 Z");
+            background: rgba(30, 30, 30, 0.9);
+            border: 2px solid #c5a059;
+            display: flex;
+            flex-direction: column;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Segmentos do Brasão */
+        .crest-segment {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            border-bottom: 1px solid rgba(197, 160, 89, 0.2);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .crest-segment:last-child {
+            border-bottom: none;
+        }
+
+        .crest-segment h3 {
+            font-family: 'Cinzel', serif;
+            font-size: 0.8rem;
+            color: #888;
+            margin: 0;
+            transition: color 0.3s;
+            z-index: 2;
+        }
+
+        .crest-segment.active {
+            background: rgba(138, 28, 28, 0.4);
+        }
+
+        .crest-segment.active h3 {
+            color: #c5a059;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(197, 160, 89, 0.5);
+        }
+
+        /* Indicador de "Luz" Lateral no segmento ativo */
+        .crest-segment.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: #c5a059;
+        }
+
+        /* Cards de Texto */
+        .text-card {
+            background: rgba(240, 230, 210, 0.95);
+            color: #1a1a1a;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+            border-left: 4px solid #444;
+            transform: scale(0.98);
+            opacity: 0.8;
+            transition: all 0.5s ease;
+        }
+
+        .text-card.in-view {
+            transform: scale(1);
+            opacity: 1;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Cores Específicas por Secção */
+        .border-roman {
+            border-left-color: #8a1c1c;
+        }
+
+        .border-shakes {
+            border-left-color: #4a1c8a;
+        }
+
+        .border-gold {
+            border-left-color: #c5a059;
+        }
+
+        .border-pop {
+            border-left-color: #000;
+            border: 1px solid #8a1c1c;
+            background: #222;
+            color: #eee;
+        }
+
+        .border-admin {
+            border-left-color: #2d8a1c;
+        }
+
+        /* Espaçador para o final do scroll */
+        .spacer {
+            height: 20vh;
+        }
+
+        /* Media Queries para Desktop */
+        @media (min-width: 768px) {
+            .app-layout {
+                flex-direction: row;
+            }
+
+            .shield-panel {
+                height: 100%;
+                width: 40%;
+                border-bottom: none;
+                border-right: 2px solid #c5a059;
+            }
+
+            .content-panel {
+                height: 100%;
+                width: 60%;
+                padding: 40px;
+            }
+
+            .crest-wrapper {
+                transform: scale(1.5);
+            }
+
+            .crest-segment h3 {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <canvas id="bg-canvas"></canvas>
+
+    <div class="app-layout">
+
+        <!-- PAINEL 1: O BRASÃO (Sempre Visível) -->
+        <aside class="shield-panel">
+            <div class="crest-wrapper">
+                <div class="crest-shield">
+                    <!-- Segmento 1 -->
+                    <div class="crest-segment active" data-target="intro" onclick="scrollToId('intro')">
+                        <h3>VERBA</h3>
+                    </div>
+                    <!-- Segmento 2 -->
+                    <div class="crest-segment" data-target="roman" onclick="scrollToId('roman')">
+                        <h3>FIDES</h3>
+                    </div>
+                    <!-- Segmento 3 -->
+                    <div class="crest-segment" data-target="shakespeare" onclick="scrollToId('shakespeare')">
+                        <h3>COR</h3>
+                    </div>
+                    <!-- Segmento 4 -->
+                    <div class="crest-segment" data-target="modern" onclick="scrollToId('modern')">
+                        <h3>VIRTUS</h3>
+                    </div>
+                    <!-- Segmento 5 -->
+                    <div class="crest-segment" data-target="pop" onclick="scrollToId('pop')">
+                        <h3>MYTHOS</h3>
+                    </div>
+                    <!-- Segmento 6 -->
+                    <div class="crest-segment" data-target="admin" onclick="scrollToId('admin')">
+                        <h3>LEX</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Etiqueta Descritiva Abaixo do Brasão -->
+            <div id="crest-label" class="absolute bottom-2 text-gold font-cinzel text-xs tracking-widest opacity-80">
+                INÍCIO
+            </div>
+        </aside>
+
+        <!-- PAINEL 2: O CONTEÚDO (Scroll) -->
+        <main class="content-panel" id="scroll-container">
+
+            <!-- Intro -->
+            <section id="intro" class="text-card border-gold in-view min-h-[50vh] flex flex-col justify-center">
+                <h1 class="text-3xl font-cinzel text-center mb-4 text-ink">Verba Vincula Sunt</h1>
+                <p class="text-center font-serif italic text-lg">
+                    "As palavras são laços."
+                </p>
+                <div class="text-center mt-6 text-xs uppercase tracking-widest text-gray-500">
+                    Deslize para Investigar
+                    <br>↓
+                </div>
+            </section>
+
+            <!-- 1. Roma -->
+            <section id="roman" class="text-card border-roman min-h-[60vh]">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="text-2xl">🏛️</span>
+                    <h2 class="text-xl font-cinzel font-bold text-crimson">A Raiz Romana</h2>
+                </div>
+                <p class="font-serif mb-4">
+                    <strong>Verbum (Palavra)</strong> denota vontade racional.<br>
+                    <strong>Vinculum (Laço)</strong> refere-se a cadeias.
+                </p>
+                <p class="text-sm border-l-2 border-crimson pl-3 italic text-gray-700">
+                    Falar é prender-se. Na Roma antiga, quebrar a palavra (Fides) era a morte civil do cidadão.
+                </p>
+            </section>
+
+            <!-- 2. Shakespeare -->
+            <section id="shakespeare" class="text-card border-shakes min-h-[60vh]">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="text-2xl">🎭</span>
+                    <h2 class="text-xl font-garamond font-bold text-indigo-900">O Sangue e a Letra</h2>
+                </div>
+                <blockquote class="text-lg font-serif italic text-center my-4 text-indigo-800">
+                    "His words are bonds,<br>his oaths are oracles."
+                </blockquote>
+                <p class="text-sm font-sans leading-relaxed">
+                    Shakespeare funde a economia com a moral. A palavra é um título de crédito. A lágrima e o sangue
+                    validam o contrato verbal. Sem corpo, não há verdade.
+                </p>
+            </section>
+
+            <!-- 3. Moderno -->
+            <section id="modern" class="text-card border-gold min-h-[60vh]">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="text-2xl">📜</span>
+                    <h2 class="text-xl font-sans font-bold text-gray-800">A Era da Retórica</h2>
+                </div>
+                <p class="font-sans mb-3 text-sm">
+                    No início do séc. XX, a frase adornava escolas e bancos. Era o dogma do capitalismo de honra.
+                </p>
+                <div class="bg-gray-200 p-3 rounded text-xs font-mono text-gray-700 border border-gray-400">
+                    RELATÓRIO 1912:<br>
+                    "Homens de palavra valem mais que ouro."
+                </div>
+            </section>
+
+            <!-- 4. Pop Culture -->
+            <section id="pop" class="text-card border-pop min-h-[60vh]">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="text-2xl">🩸</span>
+                    <h2 class="text-xl font-cinzel text-red-500">O Legado Vampírico</h2>
+                </div>
+                <p class="font-serif text-gray-300 mb-4">
+                    Em <em>The Vampire Diaries</em>, a metáfora torna-se literal.
+                </p>
+                <ul class="list-disc pl-5 text-sm text-gray-400 space-y-2">
+                    <li><strong class="text-red-400">Sire Bond:</strong> O vínculo de sangue que escraviza a vontade.
+                    </li>
+                    <li><strong class="text-gold">Escola Salvatore:</strong> Onde "Verba Vincula" é magia, não apenas
+                        moral.</li>
+                </ul>
+            </section>
+
+            <!-- 5. Administrativo -->
+            <section id="admin" class="text-card border-admin min-h-[60vh]">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="text-2xl">⚖️</span>
+                    <h2 class="text-xl font-mono font-bold text-green-900">Burocracia Atual</h2>
+                </div>
+                <p class="font-sans text-sm mb-4">
+                    Uma ironia linguística: hoje, "Verba" significa dinheiro público e "Vínculo" é restrição legal.
+                </p>
+                <div class="w-full bg-gray-100 h-2 rounded overflow-hidden mb-1">
+                    <div class="bg-green-600 h-full w-3/4"></div>
+                </div>
+                <p class="text-xs text-right text-gray-500 font-mono">Orçamento Vinculado: 75%</p>
+            </section>
+
+            <div class="spacer"></div>
+        </main>
+    </div>
+
+    <script>
+        // --- 1. Lógica de Navegação e Interatividade ---
+
+        const scrollContainer = document.getElementById('scroll-container');
+        const segments = document.querySelectorAll('.crest-segment');
+        const sections = document.querySelectorAll('section');
+        const crestLabel = document.getElementById('crest-label');
+
+        const labels = {
+            'intro': 'INÍCIO',
+            'roman': 'ANTIGUIDADE',
+            'shakespeare': 'SHAKESPEARE',
+            'modern': 'RETÓRICA 1900',
+            'pop': 'SOBRENATURAL',
+            'admin': 'BUROCRACIA'
+        };
+
+        // Função para scroll suave ao clicar no brasão
+        function scrollToId(id) {
+            const el = document.getElementById(id);
+            if (el) {
+                // Ajuste de offset para garantir que o título fique visível
+                const offset = 20;
+                const topPos = el.offsetTop - offset;
+                scrollContainer.scrollTo({
+                    top: topPos,
+                    behavior: 'smooth'
+                });
+            }
+        }
+
+        // Intersection Observer para destacar o brasão enquanto faz scroll
+        const observerOptions = {
+            root: scrollContainer,
+            threshold: 0.4 // Ativa quando 40% do card está visível
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    // Adiciona classe visual ao card
+                    entry.target.classList.add('in-view');
+
+                    // Atualiza o Brasão
+                    const id = entry.target.id;
+
+                    // Remove ativo de todos
+                    segments.forEach(seg => seg.classList.remove('active'));
+
+                    // Adiciona ativo ao correspondente
+                    const activeSeg = document.querySelector(`.crest-segment[data-target="${id}"]`);
+                    if (activeSeg) {
+                        activeSeg.classList.add('active');
+                        // Atualiza o texto descritivo abaixo do brasão
+                        crestLabel.innerText = labels[id];
+                        crestLabel.style.opacity = '0';
+                        setTimeout(() => crestLabel.style.opacity = '1', 200);
+                    }
+                } else {
+                    entry.target.classList.remove('in-view');
+                }
+            });
+        }, observerOptions);
+
+        sections.forEach(section => {
+            observer.observe(section);
+        });
+
+        // --- 2. Fundo Animado (Canvas Otimizado) ---
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        let particles = [];
+        const words = ["VERBA", "VINCULA", "SUNT", "FIDES", "LEX", "COR"];
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * width;
+                this.y = Math.random() * height;
+                this.vx = (Math.random() - 0.5) * 0.3;
+                this.vy = (Math.random() - 0.5) * 0.3;
+                this.text = words[Math.floor(Math.random() * words.length)];
+                this.size = Math.random() * 10 + 10;
+                this.alpha = Math.random() * 0.5 + 0.1;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < 0 || this.x > width) this.vx *= -1;
+                if (this.y < 0 || this.y > height) this.vy *= -1;
+            }
+
+            draw() {
+                ctx.font = `${this.size}px "Cinzel"`;
+                ctx.fillStyle = `rgba(197, 160, 89, ${this.alpha})`;
+                ctx.fillText(this.text, this.x, this.y);
+            }
+        }
+
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < 20; i++) particles.push(new Particle());
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+
+            // Desenhar conexões primeiro (atrás do texto)
+            ctx.lineWidth = 0.5;
+            for (let i = 0; i < particles.length; i++) {
+                let p1 = particles[i];
+                p1.update();
+
+                for (let j = i + 1; j < particles.length; j++) {
+                    let p2 = particles[j];
+                    let dx = p1.x - p2.x;
+                    let dy = p1.y - p2.y;
+                    let dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 100) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(138, 28, 28, ${1 - dist / 100})`; // Vermelho desvanecendo
+                        ctx.moveTo(p1.x + 10, p1.y - 5);
+                        ctx.lineTo(p2.x + 10, p2.y - 5);
+                        ctx.stroke();
+                    }
+                }
+                p1.draw();
+            }
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+        initParticles();
+        animate();
+
+    </script>
+</body>
+
+</html>

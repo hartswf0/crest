@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>CREST — Research Index</title>
+    <style>
+        :root {
+            --bg: #0a0a0c;
+            --surface: #141418;
+            --surface2: #1a1a1f;
+            --border: rgba(255, 255, 255, 0.08);
+            --text: #e8e6e3;
+            --muted: rgba(255, 255, 255, 0.5);
+            --accent: #4a9eff;
+            --sora: #a855f7;
+            --mj: #ff6b4a;
+            --gold: #d4a853;
+            --green: #22c55e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 48px;
+            padding-bottom: 32px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .title {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            color: var(--muted);
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        .main-title {
+            font-size: 32px;
+            font-weight: 300;
+            color: var(--gold);
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: var(--muted);
+            font-style: italic;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin: 32px 0;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .stat-value.root {
+            color: var(--accent);
+        }
+
+        .stat-value.sora {
+            color: var(--sora);
+        }
+
+        .stat-value.mj {
+            color: var(--mj);
+        }
+
+        .stat-value.captioned {
+            color: var(--green);
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            color: var(--muted);
+            text-transform: uppercase;
+            margin: 32px 0 16px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        .section-title:first-of-type {
+            border-top: none;
+            padding-top: 0;
+        }
+
+        .tools {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .tool-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 24px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.2s;
+        }
+
+        .tool-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .tool-icon {
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+
+        .tool-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .tool-desc {
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .crest-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .crest-item {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.15s;
+        }
+
+        .crest-item:hover {
+            border-color: var(--gold);
+            background: var(--surface2);
+        }
+
+        .crest-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gold);
+            margin-bottom: 4px;
+        }
+
+        .crest-desc {
+            font-size: 11px;
+            color: var(--muted);
+        }
+
+        .chapels {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .chapel-row {
+            display: grid;
+            grid-template-columns: 80px 1fr auto;
+            gap: 16px;
+            align-items: center;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px 20px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.15s;
+        }
+
+        .chapel-row:hover {
+            border-color: var(--gold);
+            background: var(--surface2);
+        }
+
+        .chapel-id {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--gold);
+        }
+
+        .chapel-info {
+            min-width: 0;
+        }
+
+        .chapel-name {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+
+        .chapel-type {
+            font-size: 10px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .chapel-assets {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .asset-badge {
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .asset-badge.root {
+            background: rgba(74, 158, 255, 0.15);
+            color: var(--accent);
+        }
+
+        .asset-badge.sora {
+            background: rgba(168, 85, 247, 0.15);
+            color: var(--sora);
+        }
+
+        .asset-badge.mj {
+            background: rgba(255, 107, 74, 0.15);
+            color: var(--mj);
+        }
+
+        .asset-badge.empty {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--muted);
+        }
+
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 10px;
+        }
+
+        .video-item {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 11px;
+        }
+
+        .video-item .source {
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .video-item .source.root {
+            color: var(--accent);
+        }
+
+        .video-item .source.sora {
+            color: var(--sora);
+        }
+
+        .video-item .source.mj {
+            color: var(--mj);
+        }
+
+        .video-item .file {
+            color: var(--muted);
+            font-family: ui-monospace, monospace;
+            font-size: 10px;
+            word-break: break-all;
+        }
+
+        .compiled-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .compiled-item {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+        }
+
+        .compiled-label {
+            font-size: 10px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 6px;
+        }
+
+        .compiled-file {
+            font-size: 12px;
+            font-family: ui-monospace, monospace;
+            color: var(--green);
+            word-break: break-all;
+        }
+
+        .framework {
+            margin-top: 32px;
+            padding: 24px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        .framework-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 12px;
+        }
+
+        .framework-text {
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.7;
+        }
+
+        .framework-text strong {
+            color: var(--text);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="title">CREST Project</div>
+            <h1 class="main-title">The Shield of Achilles</h1>
+            <p class="subtitle">After W.H. Auden · Video assets for ritual cartography analysis</p>
+        </header>
+
+        <div class="stats-bar">
+            <div class="stat">
+                <div class="stat-value">9</div>
+                <div class="stat-label">Chapels</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">67</div>
+                <div class="stat-label">Lines</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value root">5</div>
+                <div class="stat-label">Root</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value sora">7</div>
+                <div class="stat-label">Sora</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value mj">33</div>
+                <div class="stat-label">MJ</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value captioned">26</div>
+                <div class="stat-label">Captioned</div>
+            </div>
+        </div>
+
+        <div class="section-title">Primary Interface</div>
+        <div class="tools">
+            <a href="living_shield.html" class="tool-card"
+                style="border-color: var(--gold); background: rgba(212, 168, 83, 0.05);">
+                <div class="tool-icon">🛡️</div>
+                <div class="tool-name" style="color: var(--gold);">The Monomythic Dashboard</div>
+                <div class="tool-desc">A Living Shield of 34 generative video mosaics. Features Grid Mode, Shield Mode,
+                    and Operative Ekphrasis.</div>
+            </a>
+        </div>
+
+        <div class="section-title">Research Tools</div>
+        <div class="tools">
+            <a href="workbench.html" class="tool-card">
+                <div class="tool-icon">🎬</div>
+                <div class="tool-name">Research Workbench</div>
+                <div class="tool-desc">Theater, compare, timeline, and notes modes</div>
+            </a>
+            <a href="scenes.html" class="tool-card">
+                <div class="tool-icon">📜</div>
+                <div class="tool-name">Ritual Cartography</div>
+                <div class="tool-desc">Full poem with ceremony structure</div>
+            </a>
+            <a href="scene-theater.html" class="tool-card">
+                <div class="tool-icon">📺</div>
+                <div class="tool-name">Scene Theater</div>
+                <div class="tool-desc">Quick video playback by chapel</div>
+            </a>
+        </div>
+
+        <div class="section-title" style="display:flex; justify-content:space-between; align-items:baseline;">CREST
+            Archives <a href="crest/index.html"
+                style="font-size:10px; color:var(--gold); text-decoration:none; letter-spacing:0.1em; opacity:0.8; transition:opacity 0.2s;">ENTER
+                ARCHIVE &rarr;</a></div>
+        <div class="crest-grid">
+            <a href="crest/words.html" class="crest-item">
+                <div class="crest-name">Non Verbis, Sed Rebus</div>
+                <div class="crest-desc">I. Not by words, but by things</div>
+            </a>
+            <a href="crest/action-over-words.html" class="crest-item">
+                <div class="crest-name">Acta Non Verba</div>
+                <div class="crest-desc">Action over words</div>
+            </a>
+            <a href="crest/by-will.html" class="crest-item">
+                <div class="crest-name">By Will</div>
+                <div class="crest-desc">Volitional framework</div>
+            </a>
+            <a href="crest/conquers.html" class="crest-item">
+                <div class="crest-name">Conquers</div>
+                <div class="crest-desc">Victory through struggle</div>
+            </a>
+            <a href="crest/vincula.html" class="crest-item">
+                <div class="crest-name">Vincula</div>
+                <div class="crest-desc">Bonds and connections</div>
+            </a>
+            <a href="crest/triple.html" class="crest-item">
+                <div class="crest-name">Triple</div>
+                <div class="crest-desc">Threefold structure</div>
+            </a>
+            <a href="crest/scroll.html" class="crest-item">
+                <div class="crest-name">Scroll</div>
+                <div class="crest-desc">Continuous reading</div>
+            </a>
+            <a href="crest/f2.html" class="crest-item">
+                <div class="crest-name">F2</div>
+                <div class="crest-desc">Secondary framework</div>
+            </a>
+        </div>
+
+        <div class="section-title">Chapels</div>
+        <div class="chapels" id="chapels"></div>
+
+        <div class="section-title">Captioned Videos (with Prompts)</div>
+        <div class="video-grid" id="captioned-videos"></div>
+
+        <div class="section-title">Compiled Videos</div>
+        <div class="compiled-grid">
+            <div class="compiled-item">
+                <div class="compiled-label">Root Complete</div>
+                <div class="compiled-file">auden-shield-complete.mp4</div>
+            </div>
+            <div class="compiled-item">
+                <div class="compiled-label">Sora Complete</div>
+                <div class="compiled-file">sora/sora-complete.mp4</div>
+            </div>
+            <div class="compiled-item">
+                <div class="compiled-label">MJ Complete</div>
+                <div class="compiled-file">midjourney_session (4)/mj-complete.mp4</div>
+            </div>
+        </div>
+
+        <div class="framework">
+            <div class="framework-title">Carey Ritual Framework</div>
+            <div class="framework-text">
+                <strong>FP1:</strong> Texts are ceremonies.<br>
+                <strong>FP2:</strong> The shield is a staging device for communion.<br>
+                <strong>FP3:</strong> A map configures experience.<br>
+                <strong>FP4:</strong> Thetis expected vs. Hephaestos made = ritual break.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const CHAPELS = [
+            { id: "C1", name: "Expectation I: Pastoral", type: "THETIS REFRAIN", lines: "L01–L08", root: 4, sora: 1, mj: 4 },
+            { id: "C2", name: "Scene I: The Plain", type: "EKPHRASIS", lines: "L09–L15", root: 1, sora: 1, mj: 3 },
+            { id: "C3", name: "Scene II: The Voice", type: "EKPHRASIS", lines: "L16–L22", root: 0, sora: 1, mj: 1 },
+            { id: "C4", name: "Expectation II: Sacrifice", type: "THETIS REFRAIN", lines: "L23–L30", root: 0, sora: 1, mj: 4 },
+            { id: "C5", name: "Scene III: The Camp", type: "EKPHRASIS", lines: "L31–L37", root: 0, sora: 0, mj: 0 },
+            { id: "C6", name: "Scene IV: The Execution", type: "EKPHRASIS", lines: "L38–L44", root: 0, sora: 0, mj: 1 },
+            { id: "C7", name: "Expectation III: Dance", type: "THETIS REFRAIN", lines: "L45–L52", root: 0, sora: 1, mj: 1 },
+            { id: "C8", name: "Scene V: The Urchin", type: "EKPHRASIS", lines: "L53–L59", root: 0, sora: 1, mj: 4 },
+            { id: "C9", name: "Coda: The Armorer", type: "CODA", lines: "L60–L67", root: 0, sora: 1, mj: 14 }
+        ];
+
+        const CAPTIONED = [
+            { source: "ROOT", file: "ROOT_C1_01-02.mp4" }, { source: "ROOT", file: "ROOT_C1_03-04.mp4" },
+            { source: "ROOT", file: "ROOT_C1_05-06.mp4" }, { source: "ROOT", file: "ROOT_C1_07-08.mp4" },
+            { source: "ROOT", file: "ROOT_C2_08-09.mp4" },
+            { source: "SORA", file: "SORA_C1.mp4" }, { source: "SORA", file: "SORA_C2.mp4" },
+            { source: "SORA", file: "SORA_C3.mp4" }, { source: "SORA", file: "SORA_C4.mp4" },
+            { source: "SORA", file: "SORA_C7.mp4" }, { source: "SORA", file: "SORA_C8.mp4" },
+            { source: "SORA", file: "SORA_C9.mp4" },
+            { source: "MJ", file: "MJ_C1_Take1.mp4" }, { source: "MJ", file: "MJ_C1_Take2.mp4" },
+            { source: "MJ", file: "MJ_C2_Take1.mp4" }, { source: "MJ", file: "MJ_C2_Take2.mp4" },
+            { source: "MJ", file: "MJ_C3_Take1.mp4" }, { source: "MJ", file: "MJ_C4_Take1.mp4" },
+            { source: "MJ", file: "MJ_C4_Take2.mp4" }, { source: "MJ", file: "MJ_C6_Take1.mp4" },
+            { source: "MJ", file: "MJ_C7_Take1.mp4" }, { source: "MJ", file: "MJ_C8_Take1.mp4" },
+            { source: "MJ", file: "MJ_C8_Take2.mp4" }, { source: "MJ", file: "MJ_C9_Take1.mp4" },
+            { source: "MJ", file: "MJ_C9_Take2.mp4" }, { source: "MJ", file: "MJ_C9_Take3.mp4" }
+        ];
+
+        // Render chapels
+        document.getElementById('chapels').innerHTML = CHAPELS.map(c => `
+            <a href="workbench.html?scene=${c.id}" class="chapel-row">
+                <div class="chapel-id">${c.id}</div>
+                <div class="chapel-info">
+                    <div class="chapel-name">${c.name}</div>
+                    <div class="chapel-type">${c.type} · ${c.lines}</div>
+                </div>
+                <div class="chapel-assets">
+                    <span class="asset-badge ${c.root > 0 ? 'root' : 'empty'}">${c.root} ROOT</span>
+                    <span class="asset-badge ${c.sora > 0 ? 'sora' : 'empty'}">${c.sora} SORA</span>
+                    <span class="asset-badge ${c.mj > 0 ? 'mj' : 'empty'}">${c.mj} MJ</span>
+                </div>
+            </a>
+        `).join('');
+
+        // Render captioned videos
+        document.getElementById('captioned-videos').innerHTML = CAPTIONED.map(v => `
+            <div class="video-item">
+                <div class="source ${v.source.toLowerCase()}">${v.source}</div>
+                <div class="file">captioned/${v.file}</div>
+            </div>
+        `).join('');
+    </script>
+</body>
+
+</html>

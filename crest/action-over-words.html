@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Non Verbis, Sed Rebus: The Interactive Crest</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@300;400;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+
+        :root {
+            --gold: #D4AF37;
+            --gold-dim: #AA8C2C;
+            --deep-red: #4A0404;
+            --parchment: #F5E6CA;
+            --charcoal: #1A1A1A;
+            --royal-blue: #1E2A45;
+        }
+
+        body {
+            background-color: var(--charcoal);
+            color: var(--parchment);
+            font-family: 'Lato', sans-serif;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+            /* Remove mobile tap gray box */
+        }
+
+        h1,
+        h2,
+        h3,
+        .crest-font {
+            font-family: 'Cinzel', serif;
+        }
+
+        .serif-text {
+            font-family: 'Playfair Display', serif;
+        }
+
+        /* Crest Animation & Styles */
+        .crest-container {
+            filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.2));
+            touch-action: manipulation;
+            /* Improves touch response */
+        }
+
+        .crest-sector {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            fill-opacity: 0.9;
+            outline: none;
+        }
+
+        /* Only apply hover effects on devices that support hover (not touch) */
+        @media (hover: hover) {
+            .crest-sector:hover {
+                fill-opacity: 1;
+                filter: brightness(1.2);
+                transform: scale(1.02);
+                transform-origin: center;
+            }
+        }
+
+        .active-sector {
+            fill-opacity: 1 !important;
+            filter: brightness(1.3) drop-shadow(0 0 10px var(--gold));
+            stroke: var(--parchment);
+            stroke-width: 3px;
+        }
+
+        /* Modal/Content Panel Styles */
+        /* Default (Mobile First): Fixed Full Screen Modal */
+        .content-panel-wrapper {
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(8px);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .content-panel {
+            background: rgba(20, 20, 20, 0.95);
+            border: 1px solid var(--gold);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+            width: 100%;
+            height: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-col: column;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        /* Desktop: Relative positioning within the grid */
+        @media (min-width: 768px) {
+            .content-panel-wrapper {
+                position: relative;
+                /* Reset fixed */
+                inset: auto;
+                background: transparent;
+                backdrop-filter: none;
+                height: 80vh;
+                padding: 0;
+            }
+
+            .content-panel {
+                height: 100%;
+            }
+        }
+
+        .hidden-panel {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(100%);
+            /* Slide down on mobile close */
+        }
+
+        @media (min-width: 768px) {
+            .hidden-panel {
+                transform: translateX(20px);
+                /* Slide right on desktop close */
+            }
+        }
+
+        .visible-panel {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        /* Custom Scrollbar */
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #111;
+        }
+
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: var(--gold-dim);
+            border-radius: 3px;
+        }
+
+        /* Floating Particles */
+        .particle {
+            position: absolute;
+            background: var(--gold);
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: float 10s infinite linear;
+            pointer-events: none;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+
+            100% {
+                transform: translateY(-100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .quote-card {
+            border-left: 3px solid var(--gold);
+            padding-left: 1rem;
+            margin: 1rem 0;
+            font-style: italic;
+            color: #dcdcdc;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col items-center justify-center relative bg-[#1A1A1A]">
+
+    <!-- Ambient Background Particles -->
+    <div id="particles" class="absolute inset-0 z-0 overflow-hidden"></div>
+
+    <!-- Main UI Wrapper -->
+    <div class="z-10 w-full max-w-7xl min-h-screen flex flex-col md:flex-row items-center justify-center p-4 relative">
+
+        <!-- Left Column: The Crest (Navigation) -->
+        <div class="flex-1 flex flex-col items-center justify-center relative md:pr-8 mb-4 md:mb-0 transition-all duration-500 w-full"
+            id="crest-wrapper">
+
+            <div class="text-center mb-6 animate-fade-in-down mt-8 md:mt-0">
+                <h1 class="text-3xl md:text-5xl text-[#D4AF37] tracking-wider mb-2">NON VERBIS</h1>
+                <h2 class="text-xl md:text-2xl text-gray-400 tracking-widest font-light">SED REBUS</h2>
+                <p class="text-xs text-gray-500 mt-3 uppercase tracking-[0.2em] animate-pulse">Tap a Sector to Explore
+                </p>
+            </div>
+
+            <!-- SVG Interactive Crest -->
+            <!-- max-w-xs ensures it fits on small phones, md:max-w-none lets it grow on desktop -->
+            <div class="w-full max-w-[320px] md:max-w-md aspect-square relative">
+                <svg class="crest-container w-full h-full" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Filters -->
+                    <defs>
+                        <filter id="glow">
+                            <feGaussianBlur stdDeviation="2.5" result="coloredBlur" />
+                            <feMerge>
+                                <feMergeNode in="coloredBlur" />
+                                <feMergeNode in="SourceGraphic" />
+                            </feMerge>
+                        </filter>
+                    </defs>
+
+                    <!-- Center: Etymology -->
+                    <circle cx="200" cy="200" r="60" fill="#D4AF37" class="crest-sector" onclick="loadSection('intro')"
+                        id="sec-intro"></circle>
+                    <text x="200" y="210" font-family="FontAwesome" font-size="30" text-anchor="middle" fill="#4A0404"
+                        pointer-events="none" class="fa">&#xf51e;</text>
+
+                    <!-- Sector 1: Philosophy (Top Left) -->
+                    <path d="M 190 145 L 60 50 A 180 180 0 0 0 20 200 L 140 200 Z" fill="#4A0404" stroke="#1A1A1A"
+                        stroke-width="2" class="crest-sector" onclick="loadSection('philosophy')" id="sec-philosophy">
+                    </path>
+                    <text x="100" y="150" font-family="FontAwesome" font-size="24" fill="#F5E6CA" pointer-events="none"
+                        class="fa">&#xf02d;</text>
+
+                    <!-- Sector 2: Linguistics (Top Right) -->
+                    <path d="M 210 145 L 340 50 A 180 180 0 0 1 380 200 L 260 200 Z" fill="#1E2A45" stroke="#1A1A1A"
+                        stroke-width="2" class="crest-sector" onclick="loadSection('linguistics')" id="sec-linguistics">
+                    </path>
+                    <text x="300" y="150" font-family="FontAwesome" font-size="24" fill="#F5E6CA" pointer-events="none"
+                        class="fa">&#xf06e;</text>
+
+                    <!-- Sector 3: History (Bottom Left) -->
+                    <path d="M 190 255 L 60 350 A 180 180 0 0 1 20 200 L 140 200 Z" fill="#2C3E50" stroke="#1A1A1A"
+                        stroke-width="2" class="crest-sector" onclick="loadSection('history')" id="sec-history"></path>
+                    <text x="100" y="270" font-family="FontAwesome" font-size="24" fill="#F5E6CA" pointer-events="none"
+                        class="fa">&#xf132;</text>
+
+                    <!-- Sector 4: Law & AI (Bottom Right) -->
+                    <path d="M 210 255 L 340 350 A 180 180 0 0 0 380 200 L 260 200 Z" fill="#5D4037" stroke="#1A1A1A"
+                        stroke-width="2" class="crest-sector" onclick="loadSection('law-ai')" id="sec-law-ai"></path>
+                    <text x="300" y="270" font-family="FontAwesome" font-size="24" fill="#F5E6CA" pointer-events="none"
+                        class="fa">&#xf24e;</text>
+
+                    <!-- Label -->
+                    <text x="200" y="30" font-family="Cinzel" font-size="14" fill="#D4AF37" text-anchor="middle"
+                        id="crest-label" opacity="0" class="transition-opacity duration-300 pointer-events-none">Start
+                        Exploring</text>
+                </svg>
+            </div>
+
+            <!-- Legend -->
+            <div class="mt-8 grid grid-cols-2 gap-x-8 gap-y-2 text-xs text-gray-500 font-mono md:flex md:gap-4">
+                <div class="flex items-center"><span class="w-3 h-3 bg-[#4A0404] mr-2 rounded-full"></span>Phil.
+                    (Seneca)</div>
+                <div class="flex items-center"><span class="w-3 h-3 bg-[#1E2A45] mr-2 rounded-full"></span>Ling. (Rebus)
+                </div>
+                <div class="flex items-center"><span class="w-3 h-3 bg-[#2C3E50] mr-2 rounded-full"></span>Hist.
+                    (Heraldry)</div>
+                <div class="flex items-center"><span class="w-3 h-3 bg-[#5D4037] mr-2 rounded-full"></span>Modern
+                    (AI/Law)</div>
+            </div>
+        </div>
+
+        <!-- Right Column: Content Panel (Fixed Modal on Mobile, Relative on Desktop) -->
+        <div id="content-display" class="hidden-panel content-panel-wrapper">
+            <div class="content-panel flex flex-col">
+
+                <!-- Header -->
+                <div
+                    class="h-16 border-b border-[#D4AF37]/30 flex items-center justify-between px-6 bg-[#111] shrink-0">
+                    <h2 id="panel-title"
+                        class="text-[#D4AF37] text-lg md:text-xl font-bold tracking-wider uppercase truncate pr-4">
+                        Select a Topic</h2>
+                    <button onclick="closePanel()" class="text-gray-400 hover:text-white transition-colors p-2 -mr-2">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+
+                <!-- Scrollable Content -->
+                <div id="panel-body"
+                    class="flex-1 overflow-y-auto p-6 custom-scroll serif-text text-lg leading-relaxed text-gray-300">
+                    <div class="flex flex-col items-center justify-center h-full text-center text-gray-500">
+                        <i class="fas fa-hand-pointer text-4xl mb-4 opacity-50"></i>
+                        <p>Interact with the Crest to reveal the knowledge within.</p>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div
+                    class="h-12 border-t border-[#D4AF37]/30 flex items-center px-6 bg-[#111] text-xs text-gray-500 justify-between shrink-0">
+                    <span id="panel-category" class="uppercase tracking-widest">SYSTEM: WAITING</span>
+                    <span class="hidden md:inline">RES • NON • VERBA</span>
+                    <button class="md:hidden text-[#D4AF37]" onclick="closePanel()">CLOSE</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Data & Scripts -->
+    <script>
+        const contentData = {
+            intro: {
+                title: "The Ontology of Substance",
+                category: "ETYMOLOGY",
+                color: "#D4AF37",
+                body: `
+                    <p class="mb-4 first-letter:text-5xl first-letter:float-left first-letter:mr-3 first-letter:text-[#D4AF37] first-letter:font-serif">T</p>
+                    <p class="mb-4">The history of human thought is bound to the tension between the signifier and the signified. <strong>Non Verbis, Sed Rebus</strong>—"not by words, but by things"—privileges material reality over linguistic abstraction.</p>
+                    <h3 class="text-[#D4AF37] font-bold mt-6 mb-2 border-b border-gray-700 pb-2">Root of Reality</h3>
+                    <p class="mb-4">The Latin <em>res</em> traces to Proto-Indo-European <em>reh-i-</em> ("wealth"). A "thing" was originally an object of value. Unlike words (*verba*), things cannot be easily manipulated.</p>
+                    <div class="bg-[#1a1a1a] p-4 rounded border border-gray-700 my-6 text-sm">
+                        <ul class="space-y-1">
+                            <li>• <strong>PIE:</strong> *reh-i- (Wealth)</li>
+                            <li>• <strong>Latin:</strong> Res (Thing, Matter)</li>
+                        </ul>
+                    </div>
+                `
+            },
+            philosophy: {
+                title: "Stoicism: Virtue as Matter",
+                category: "PHILOSOPHY",
+                color: "#4A0404",
+                body: `
+                    <div class="flex items-center justify-center mb-6">
+                        <i class="fas fa-scroll text-4xl text-[#4A0404] bg-[#F5E6CA] p-4 rounded-full shadow-lg"></i>
+                    </div>
+                    <p class="mb-4">Seneca the Younger championed the principle: <em>Eloquentiam non verbis, sed rebus valere</em>.</p>
+                    <div class="quote-card">
+                        "Serve the sense, not the words." <br>
+                        <span class="text-sm text-[#D4AF37] not-italic">— Seneca</span>
+                    </div>
+                    <p class="mb-4">For Stoics, words were merely vessels. If the vessel was ornate but empty (Sophistry), it was useless.</p>
+                `
+            },
+            linguistics: {
+                title: "The Rebus Principle",
+                category: "LINGUISTICS",
+                color: "#1E2A45",
+                body: `
+                    <p class="mb-4">The "Rebus Principle" is the cognitive leap from pictography to phonography. It uses a picture of a thing for its sound.</p>
+                    <div class="grid grid-cols-2 gap-4 my-6">
+                        <div class="bg-[#2a3b55] p-3 rounded text-center">
+                            <i class="fas fa-eye text-2xl mb-2 text-[#D4AF37]"></i>
+                            <p class="font-bold text-[#F5E6CA]">Sound: "I"</p>
+                        </div>
+                        <div class="bg-[#2a3b55] p-3 rounded text-center">
+                            <i class="fab fa-envira text-2xl mb-2 text-[#D4AF37]"></i>
+                            <p class="font-bold text-[#F5E6CA]">Sound: "LIEF"</p>
+                        </div>
+                    </div>
+                    <p class="text-center italic text-sm mb-6 text-gray-400">Result: "Belief"</p>
+                    <p>Historical Examples:</p>
+                    <ul class="list-disc pl-5 space-y-2 mb-4 text-sm">
+                        <li><strong>Egypt:</strong> Ramses II statue (Falcon + Child + Plant).</li>
+                        <li><strong>China:</strong> 'Bright' (Sun + Moon).</li>
+                    </ul>
+                `
+            },
+            history: {
+                title: "Heraldry & Material Culture",
+                category: "HISTORY",
+                color: "#2C3E50",
+                body: `
+                    <p class="mb-4">In the Middle Ages, the <em>rebus</em> created "canting arms" (*armes parlantes*)—coats of arms that "sang" the bearer's name.</p>
+                    <div class="border-l-2 border-[#D4AF37] pl-4 my-4 space-y-4">
+                        <div>
+                            <span class="text-[#D4AF37] font-bold">Salmon Family</span>
+                            <p class="text-sm">Three salmon on the shield.</p>
+                        </div>
+                        <div>
+                            <span class="text-[#D4AF37] font-bold">Bishop Lyhart</span>
+                            <p class="text-sm">A "Hart" (deer) "Lying" in water.</p>
+                        </div>
+                    </div>
+                    <p>Subversives also used objects to speak treason without writing libelous words.</p>
+                `
+            },
+            'law-ai': {
+                title: "Law & AI",
+                category: "MODERN ERA",
+                color: "#5D4037",
+                body: `
+                    <p class="mb-4"><strong>Law:</strong> <em>Leges non verbis sed rebus sunt impositae</em> ("Laws are imposed on things, not words"). Courts look at reality, not just labels.</p>
+                    <hr class="border-gray-700 my-6">
+                    <h3 class="text-[#D4AF37] font-bold mb-2">The AI Problem</h3>
+                    <p class="mb-4">Recent studies show LLMs struggle with Rebuses.</p>
+                    <div class="bg-red-900/20 border border-red-900/50 p-4 rounded text-center mb-4">
+                        <p class="text-red-300 font-bold text-sm">"LLMs are Weak Solvers"</p>
+                    </div>
+                    <p class="mb-4">LLMs operate <em>in verbis</em> (text statistics), lacking <em>res</em> (grounded reality). A human simulates the object; an AI guesses the word.</p>
+                `
+            }
+        };
+
+        function loadSection(sectionId) {
+            const data = contentData[sectionId];
+            if (!data) return;
+
+            // Visual Feedback
+            document.querySelectorAll('.crest-sector').forEach(el => el.classList.remove('active-sector'));
+            document.getElementById(`sec-${sectionId}`).classList.add('active-sector');
+
+            // Update Label
+            const label = document.getElementById('crest-label');
+            label.textContent = data.title;
+            label.style.opacity = 1;
+
+            // Show Panel
+            const panel = document.getElementById('content-display');
+            panel.classList.remove('hidden-panel');
+            panel.classList.add('visible-panel');
+
+            // Populate Content
+            document.getElementById('panel-title').textContent = data.title;
+            document.getElementById('panel-title').style.color = data.color;
+            document.getElementById('panel-category').textContent = data.category;
+
+            const body = document.getElementById('panel-body');
+            body.innerHTML = `<div class="animate-fade-in pb-4">${data.body}</div>`;
+
+            // Lock body scroll on mobile
+            if (window.innerWidth < 768) {
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closePanel() {
+            const panel = document.getElementById('content-display');
+            panel.classList.remove('visible-panel');
+            panel.classList.add('hidden-panel');
+
+            // Unlock body scroll
+            document.body.style.overflow = '';
+
+            // Reset visuals
+            document.querySelectorAll('.crest-sector').forEach(el => el.classList.remove('active-sector'));
+            document.getElementById('crest-label').style.opacity = 0;
+        }
+
+        // Particle System
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 15; i++) {
+                const p = document.createElement('div');
+                p.classList.add('particle');
+                p.style.left = Math.random() * 100 + 'vw';
+                p.style.top = Math.random() * 100 + 'vh';
+                p.style.width = Math.random() * 4 + 'px';
+                p.style.height = p.style.width;
+                p.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                p.style.animationDelay = (Math.random() * 5) + 's';
+                container.appendChild(p);
+            }
+        }
+        window.onload = createParticles;
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Operational Ekphrasis: Auden</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background: #f4f1ea;
+            color: #1a1a1a;
+            overflow: hidden;
+            font-size: 15px;
+            /* Increased base size for legibility */
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .scroll-container {
+            display: flex;
+            height: 100vh;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scroll-behavior: smooth;
+        }
+
+        .column {
+            min-width: 460px;
+            /* Slightly wider for reading */
+            width: 460px;
+            height: 100vh;
+            border-right: 1px solid #d1d1cd;
+            background: #f4f1ea;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            position: relative;
+        }
+
+        .column.collapsed {
+            min-width: 52px;
+            width: 52px;
+            background: #e9e6dd;
+            border-right: 1px solid #ccc;
+        }
+
+        .column-tab {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            padding: 24px 0;
+            background: #e9e6dd;
+            border-bottom: 1px solid #d1d1cd;
+            cursor: pointer;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: #555;
+            transition: all 0.2s;
+            user-select: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 52px;
+            height: 100%;
+            z-index: 10;
+            opacity: 0;
+        }
+
+        .column.collapsed .column-tab {
+            opacity: 1;
+        }
+
+        .column-tab:hover {
+            background: #dcd9d0;
+            color: #000;
+        }
+
+        .column-header {
+            height: 72px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            border-bottom: 1px solid #d1d1cd;
+            background: #f4f1ea;
+            /* Matches body for cleaner look */
+            flex-shrink: 0;
+        }
+
+        .column.collapsed .column-header {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .column-title {
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: #444;
+            font-weight: 700;
+        }
+
+        .column-marker {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        /* Adjusted marker colors for light mode contrast */
+        .column[data-type="essay"] .column-marker {
+            background: #d93d4d;
+        }
+
+        .column[data-type="poem"] .column-marker {
+            background: #2da85c;
+        }
+
+        .column[data-type="prompt"] .column-marker {
+            background: #2d63a8;
+        }
+
+        .column[data-type="image"] .column-marker {
+            background: #d9c02d;
+        }
+
+        .column-content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 40px 32px;
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+
+        .column.collapsed .column-content {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .unit {
+            margin-bottom: 32px;
+            padding: 28px;
+            background: #ffffff;
+            border: 1px solid #d1d1cd;
+            border-left: 3px solid #d1d1cd;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.03);
+            /* Subtle paper shadow */
+        }
+
+        .unit:hover {
+            border-color: #999;
+            box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.05);
+            transform: translateY(-1px);
+        }
+
+        .unit.active {
+            background: #fff;
+            border-color: #333;
+            border-left-width: 4px;
+            box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .column[data-type="essay"] .unit.active {
+            border-left-color: #d93d4d;
+        }
+
+        .column[data-type="poem"] .unit.active {
+            border-left-color: #2da85c;
+        }
+
+        .column[data-type="prompt"] .unit.active {
+            border-left-color: #2d63a8;
+        }
+
+        .column[data-type="image"] .unit.active {
+            border-left-color: #d9c02d;
+        }
+
+        .unit-id {
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            color: #666;
+            margin-bottom: 16px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .unit-text {
+            color: #222;
+            font-size: 15px;
+            line-height: 1.7;
+            text-align: left;
+            /* Better for reading than justify on web */
+        }
+
+        .unit.active .unit-text {
+            color: #000;
+            font-weight: 500;
+        }
+
+        /* Poem styling specifically */
+        .poem-line {
+            padding: 8px 0;
+            padding-left: 40px;
+            position: relative;
+            color: #333;
+            font-family: 'Georgia', serif;
+            font-style: italic;
+        }
+
+        .poem-line::before {
+            content: attr(data-num);
+            position: absolute;
+            left: 0;
+            color: #888;
+            font-size: 10px;
+            width: 24px;
+            text-align: right;
+            font-family: 'Courier New', monospace;
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        .prompt-q {
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            color: #444;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 8px;
+            display: inline-block;
+            font-weight: bold;
+        }
+
+        .prompt-a {
+            color: #222;
+            font-size: 14px;
+        }
+
+        .barrel {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: #eee;
+            /* Placeholder grey */
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #ccc;
+        }
+
+        .barrel::before {
+            content: '';
+            position: absolute;
+            width: 1px;
+            height: 100%;
+            background: #ccc;
+            left: 50%;
+        }
+
+        .barrel::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 1px;
+            background: #ccc;
+            top: 50%;
+        }
+
+        .barrel-label {
+            position: relative;
+            z-index: 1;
+            font-family: 'Courier New', monospace;
+            font-size: 10px;
+            color: #666;
+            text-align: center;
+            letter-spacing: 0.2em;
+            line-height: 2;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 4px;
+        }
+
+        .image-prompt {
+            font-size: 11px;
+            color: #444;
+            line-height: 1.5;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px dashed #ccc;
+            font-family: 'Courier New', monospace;
+            background: #f9f9f9;
+            padding: 10px;
+            border-radius: 2px;
+        }
+
+        .version-dots {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+            justify-content: center;
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            background: #ccc;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-radius: 50%;
+            border: 1px solid transparent;
+        }
+
+        .dot:hover {
+            background: #999;
+            transform: scale(1.2);
+        }
+
+        .dot.active {
+            background: #fff;
+            border-color: #d9c02d;
+            box-shadow: 0 0 0 2px #d9c02d;
+        }
+
+        /* Scrollbar styling for light theme */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f4f1ea;
+            border-left: 1px solid #e0e0e0;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #d1d1cd;
+            border-radius: 4px;
+            border: 2px solid #f4f1ea;
+            /* creates padding effect */
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #b0b0ac;
+        }
+
+        .collapse-hint {
+            position: absolute;
+            top: 50%;
+            right: 0;
+            width: 32px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #999;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s;
+            z-index: 5;
+            background: transparent;
+        }
+
+        .collapse-hint:hover {
+            color: #333;
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .column.collapsed .collapse-hint {
+            display: none;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .column.new {
+            animation: slideIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .origin-marker {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            font-size: 9px;
+            color: #666;
+            background: #f4f1ea;
+            padding: 2px 6px;
+            border: 1px solid #ccc;
+            letter-spacing: 0.1em;
+            font-family: 'Courier New', monospace;
+        }
+
+        .tag {
+            display: inline-block;
+            font-family: 'Courier New', monospace;
+            font-size: 9px;
+            padding: 2px 6px;
+            margin-right: 4px;
+            margin-bottom: 8px;
+            background: #e9e6dd;
+            color: #444;
+            border-radius: 2px;
+            border: 1px solid #dcd9d0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="scroll-container" id="scrollContainer">
+        <div class="column" data-type="essay" data-index="0">
+            <div class="column-tab">MANIFESTO</div>
+            <div class="column-header">
+                <div class="column-title">OPERATIONAL EKPHRASIS</div>
+                <div class="column-marker"></div>
+            </div>
+            <div class="collapse-hint">‹</div>
+            <div class="column-content" id="essay-content"></div>
+        </div>
+    </div>
+
+    <script>
+        const state = {
+            columns: ['essay'],
+            activeSelections: {},
+            columnIndex: 0
+        };
+
+        // THICK DESCRIPTION CORPUS
+        const corpus = {
+            essay: [
+                {
+                    id: 'OP-01',
+                    text: 'The poem "Musée des Beaux Arts" is not merely literature; it is a technical manual on <strong>Operational Ecology</strong>. Auden posits that the "Old Masters" were essentially early Context Engineers. They understood that for a tragedy to achieve high fidelity, it cannot be rendered as the primary event. It must be a background process—a daemon running silently on a low-priority thread—while the system\'s main loop (the ploughman, the ship, the horse) executes its biological functions without error.'
+                },
+                {
+                    id: 'OP-02',
+                    text: 'This illustrates the <strong>Algorithm of Indifference</strong>. Suffering is not a "system failure" or a bug; it is a persistent feature of the environment. The "human position" Auden describes is one of pathfinding optimization. The boy falling from the sky is a "Thin Description" (a splash). The "Thick Description" is the totality of the scene: the biological imperative to metabolize (eating), the economic imperative to transport (sailing), and the physical imperative of gravity, all running concurrently.'
+                },
+                {
+                    id: 'OP-03',
+                    text: 'Consider the <strong>Contextual Integrity</strong> of Bruegel\'s Icarus. The composition pushes the mythological event (the fall) into the bottom-right corner, occluded by the mundane labor of the ploughman. This is a deliberate "weighing" of vectors in the latent space. The vector of "Survival" (agriculture) has a higher magnitude than the vector of "Hubris" (flight). The painting renders the world not as it <em>should</em> be (heroic), but as it <em>functions</em> (material/indifferent).'
+                },
+                {
+                    id: 'OP-04',
+                    text: 'The poem concludes that the universe has no <code>catch</code> block for the exception <code>Icarus.Fall()</code>. The sun shines "as it had to." This phrase—"as it had to"—confirms the deterministic physics of the simulation. The sun is a hard-coded light source; it cannot dim for a single user\'s termination. This is the ultimate "Operational Reality": the system persists regardless of the individual agent\'s state.'
+                }
+            ],
+            poem: [
+                { id: 'L01', num: 1, text: 'About suffering they were never wrong,' },
+                { id: 'L02', num: 2, text: 'The Old Masters: how well they understood' },
+                { id: 'L03', num: 3, text: 'Its human position: how it takes place' },
+                { id: 'L04', num: 4, text: 'While someone else is eating or opening a window' },
+                { id: 'L05', num: 5, text: 'or just walking dully along;' },
+                { id: 'L14', num: 14, text: 'In Brueghel\'s Icarus, for instance: how everything turns away' },
+                { id: 'L15', num: 15, text: 'Quite leisurely from the disaster; the ploughman may' },
+                { id: 'L16', num: 16, text: 'Have heard the splash, the forsaken cry,' },
+                { id: 'L17', num: 17, text: 'But for him it was not an important failure;' },
+                { id: 'L18', num: 18, text: 'the sun shone' },
+                { id: 'L19', num: 19, text: 'As it had to on the white legs disappearing into the green' },
+                { id: 'L20', num: 20, text: 'Water, and the expensive delicate ship that must have seen' },
+                { id: 'L21', num: 21, text: 'Something amazing, a boy falling out of the sky,' },
+                { id: 'L22', num: 22, text: 'Had somewhere to get to and sailed calmly on.' }
+            ]
+        };
+
+        // THICK PROMPT LOGIC
+        function generatePrompts(lineId) {
+            const prompts = [];
+
+            // Stanza 1: The Biopolitics of Distraction
+            if (['L01', 'L02', 'L03', 'L04', 'L05'].includes(lineId)) {
+                prompts.push({
+                    id: `CTX-${lineId}-A`,
+                    origin: lineId,
+                    q: 'Biopolitics of Distraction',
+                    a: 'Why juxtapose "suffering" with "eating"? It reduces the Sublime (Myth) to the Biological (Metabolism). The prompt forces us to render the "human position" not as a dramatic pose, but as a pathfinding routine focused on caloric intake.'
+                });
+                prompts.push({
+                    id: `CTX-${lineId}-B`,
+                    origin: lineId,
+                    q: 'NPC State Logic',
+                    a: '"Walking dully along" suggests the Non-Player Character state. They are not cruel; they are resource-optimized. They do not have the CPU cycles allocated to process the high-fidelity tragedy of others. Their render distance is short.'
+                });
+            }
+
+            // Stanza 2: The Ploughman's Filter
+            if (['L14', 'L15', 'L16', 'L17'].includes(lineId)) {
+                prompts.push({
+                    id: `CTX-${lineId}-C`,
+                    origin: lineId,
+                    q: 'The Attention Economy',
+                    a: 'The ploughman "may have heard." This ambiguity is the "Thin Description." The "Thick Description" is that he filtered the data signal. His ROI on looking up is zero. The soil requires 100% of his gaze to ensure yield.'
+                });
+                prompts.push({
+                    id: `CTX-${lineId}-D`,
+                    origin: lineId,
+                    q: 'Error Handling',
+                    a: 'Why is the death called a "failure" and not a tragedy? Failure implies a malfunction in a mechanism. The boy malfunctioned (wing_integrity < 0); the ploughman is functioning within spec. The system ignores the error.'
+                });
+            }
+
+            // Stanza 3: The Physics of Capital
+            if (['L19', 'L20', 'L21', 'L22'].includes(lineId)) {
+                prompts.push({
+                    id: `CTX-${lineId}-E`,
+                    origin: lineId,
+                    q: 'Capitalist Realism',
+                    a: 'The ship is "expensive" and "delicate." It is a vector of commerce. It has "somewhere to get to." The logic of the Trade Route overrides the logic of the Myth. The simulation cannot pause for a cutscene because the delivery schedule is fixed.'
+                });
+                prompts.push({
+                    id: `CTX-${lineId}-F`,
+                    origin: lineId,
+                    q: 'Garbage Collection',
+                    a: 'We focus on "white legs disappearing." The user entity "Icarus" has already been deleted from the context window. Only the artifact (legs) remains for one frame before the water shader overwrites it. This is total object deletion.'
+                });
+            }
+
+            return prompts;
+        }
+
+        // GENERATIVE MATERIALITY
+        function generateImages(promptId) {
+            let core = "northern renaissance oil painting, cracked varnish texture, heavy impasto, earthy tones, dramatic chiaroscuro :: ";
+
+            if (promptId.includes('A') || promptId.includes('B')) {
+                return [
+                    { id: `LATENT-${promptId}-1`, origin: promptId, prompt: core + 'macro photography of a peasant mouth chewing coarse bread, crumbs on lip, eyes glazed over in "dully" state, depth of field blurring out a distant crucifixion, 50mm lens' },
+                    { id: `LATENT-${promptId}-2`, origin: promptId, prompt: core + 'high-angle isometric view of a medieval street, crowd swarming algorithmically, individual pathfinding lines visible as faint overlays, muted grey atmosphere, low poly count aesthetic on background figures' }
+                ];
+            }
+
+            if (promptId.includes('C') || promptId.includes('D')) {
+                return [
+                    { id: `LATENT-${promptId}-1`, origin: promptId, prompt: core + 'over-the-shoulder shot of a ploughman, rough wool texture, focus strictly on the geometric furrows of the earth, golden hour light, the sea is visible in peripheral but rendered in low resolution' },
+                    { id: `LATENT-${promptId}-2`, origin: promptId, prompt: core + 'schematic diagram of a ploughman\'s field of view, visual cone restricted to 45 degrees downwards, masking out the sky, data overlay showing "Soil Quality: High" and "Disturbance: Ignored"' }
+                ];
+            }
+
+            if (promptId.includes('E') || promptId.includes('F')) {
+                return [
+                    { id: `LATENT-${promptId}-1`, origin: promptId, prompt: core + 'majestic merchant galleon, intricate rigging, full sails catching wind, sailing away from camera, serene turquoise water, "expensive" gold leaf detailing on hull, motion blur indicating speed' },
+                    { id: `LATENT-${promptId}-2`, origin: promptId, prompt: core + 'minimalist composition, vast green ocean surface, two small pale legs submerged vertically, tiny splash, high contrast, absence of hero, water shader reflecting the cold indifferent sun' }
+                ];
+            }
+
+            return [
+                { id: `LATENT-${promptId}-ERR`, origin: promptId, prompt: core + 'landscape with fall of icarus, bruegel style, atmospheric perspective, digital artifacting and data corruption in the bottom right corner where the legs should be' }
+            ];
+        }
+
+        function initEssay() {
+            const container = document.getElementById('essay-content');
+            corpus.essay.forEach(item => {
+                const unit = createUnit(item.id, `
+                    <div class="unit-id">${item.id}</div>
+                    <div class="unit-text essay-full">${item.text}</div>
+                `);
+                unit.addEventListener('click', () => selectEssay(item.id));
+                container.appendChild(unit);
+            });
+        }
+
+        function createUnit(id, innerHTML) {
+            const div = document.createElement('div');
+            div.className = 'unit';
+            div.dataset.id = id;
+            div.innerHTML = innerHTML;
+            return div;
+        }
+
+        function selectEssay(id) {
+            setActive('essay', id);
+            state.activeSelections.essay = id;
+
+            if (!state.columns.includes('poem')) {
+                addColumn('poem', 'SOURCE TEXT', corpus.poem.map(line =>
+                    createUnit(line.id, `
+                        <div class="unit-id">${line.id}</div>
+                        <div class="poem-line" data-num="${line.num}">${line.text}</div>
+                    `)
+                ));
+
+                document.querySelectorAll('[data-type="poem"] .unit').forEach(unit => {
+                    unit.addEventListener('click', () => selectPoem(unit.dataset.id));
+                });
+            }
+        }
+
+        function selectPoem(id) {
+            setActive('poem', id);
+            state.activeSelections.poem = id;
+
+            const prompts = generatePrompts(id);
+
+            removeColumnsAfter('poem');
+
+            addColumn('prompt', 'CONTEXT ENG.', prompts.map(p =>
+                createUnit(p.id, `
+                    <div class="unit-id">${p.id}</div>
+                    <div class="origin-marker">REF: ${p.origin}</div>
+                    <div class="prompt-q">${p.q}</div>
+                    <div class="prompt-a">${p.a}</div>
+                `)
+            ));
+
+            document.querySelectorAll('[data-type="prompt"] .unit').forEach(unit => {
+                unit.addEventListener('click', () => selectPrompt(unit.dataset.id));
+            });
+        }
+
+        function selectPrompt(id) {
+            setActive('prompt', id);
+            state.activeSelections.prompt = id;
+
+            const images = generateImages(id);
+
+            removeColumnsAfter('prompt');
+
+            addColumn('image', 'RENDER', images.map(img =>
+                createUnit(img.id, `
+                    <div class="unit-id">${img.id}</div>
+                    <div class="origin-marker">SRC: ${img.origin}</div>
+                    <div class="barrel">
+                        <div class="barrel-label">LATENT SPACE<br>BUFFER_01</div>
+                    </div>
+                    <div class="tag">OIL_V2</div><div class="tag">CRITICAL</div>
+                    <div class="image-prompt">${img.prompt}</div>
+                    <div class="version-dots">
+                        <div class="dot active"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+                `)
+            ));
+
+            document.querySelectorAll('[data-type="image"] .unit').forEach(unit => {
+                unit.addEventListener('click', () => selectImage(unit.dataset.id));
+            });
+
+            document.querySelectorAll('[data-type="image"] .dot').forEach(dot => {
+                dot.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const parent = dot.closest('.unit');
+                    parent.querySelectorAll('.dot').forEach(d => d.classList.remove('active'));
+                    dot.classList.add('active');
+                });
+            });
+        }
+
+        function selectImage(id) {
+            setActive('image', id);
+            state.activeSelections.image = id;
+        }
+
+        function setActive(type, id) {
+            document.querySelectorAll(`[data-type="${type}"] .unit`).forEach(u => {
+                u.classList.remove('active');
+            });
+            const unit = document.querySelector(`[data-type="${type}"] [data-id="${id}"]`);
+            if (unit) unit.classList.add('active');
+        }
+
+        function addColumn(type, title, units) {
+            state.columnIndex++;
+            state.columns.push(type);
+
+            const col = document.createElement('div');
+            col.className = 'column new';
+            col.dataset.type = type;
+            col.dataset.index = state.columnIndex;
+
+            col.innerHTML = `
+                <div class="column-tab">${title}</div>
+                <div class="column-header">
+                    <div class="column-title">${title}</div>
+                    <div class="column-marker"></div>
+                </div>
+                <div class="collapse-hint">‹</div>
+                <div class="column-content"></div>
+            `;
+
+            const content = col.querySelector('.column-content');
+            units.forEach(unit => content.appendChild(unit));
+
+            const container = document.getElementById('scrollContainer');
+            container.appendChild(col);
+
+            const hint = col.querySelector('.collapse-hint');
+            const tab = col.querySelector('.column-tab');
+
+            hint.addEventListener('click', () => toggleCollapse(col));
+            tab.addEventListener('click', () => toggleCollapse(col));
+
+            setTimeout(() => {
+                col.classList.remove('new');
+                container.scrollLeft = container.scrollWidth;
+            }, 50);
+        }
+
+        function toggleCollapse(col) {
+            col.classList.toggle('collapsed');
+        }
+
+        function removeColumnsAfter(type) {
+            const typeIndex = state.columns.indexOf(type);
+            const toRemove = state.columns.slice(typeIndex + 1);
+
+            toRemove.forEach(t => {
+                const col = document.querySelector(`[data-type="${t}"]`);
+                if (col) col.remove();
+            });
+
+            state.columns = state.columns.slice(0, typeIndex + 1);
+        }
+
+        initEssay();
+        console.log('OPERATIONAL EKPHRASIS: SYSTEM READY');
+    </script>
+</body>
+
+</html>
