@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Computational Shield of Achilles</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Share+Tech+Mono&display=swap');
+
+        body {
+            background-color: #050505;
+            color: #e5e5e5;
+            font-family: 'Share Tech Mono', monospace;
+            overflow: hidden;
+        }
+
+        .cinzel {
+            font-family: 'Cinzel', serif;
+        }
+
+        .layer-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            overflow: hidden;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+            transition: box-shadow 0.5s ease;
+        }
+
+        /* Layer 1: The Iconic (Surface) */
+        #layer-surface {
+            background: radial-gradient(circle at 30% 30%, #fcd34d, #b45309, #451a03);
+            z-index: 30;
+            opacity: 1;
+        }
+
+        /* Layer 2: The Mesh (Wireframe) */
+        #layer-mesh {
+            background-color: #0f172a;
+            z-index: 20;
+            opacity: 1;
+        }
+
+        /* Layer 3: The Code (Worldtext) */
+        #layer-code {
+            background-color: #000;
+            z-index: 10;
+            opacity: 1;
+        }
+
+        .control-panel {
+            position: absolute;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid #334155;
+            padding: 1.5rem;
+            border-radius: 1rem;
+            width: 90%;
+            max-width: 600px;
+            z-index: 50;
+            backdrop-filter: blur(10px);
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 24px;
+            width: 24px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            cursor: pointer;
+            margin-top: -10px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #475569;
+            border-radius: 2px;
+        }
+
+        .canvas-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .glow-text {
+            text-shadow: 0 0 5px rgba(34, 197, 94, 0.8);
+        }
+
+        .scanline {
+            width: 100%;
+            height: 100px;
+            z-index: 10;
+            background: linear-gradient(0deg, rgba(0, 0, 0, 0) 0%, rgba(34, 197, 94, 0.1) 50%, rgba(0, 0, 0, 0) 100%);
+            opacity: 0.1;
+            position: absolute;
+            bottom: 100%;
+            animation: scanline 10s linear infinite;
+        }
+
+        @keyframes scanline {
+            0% {
+                bottom: 100%;
+            }
+
+            100% {
+                bottom: -100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header -->
+    <div class="absolute top-8 left-0 w-full text-center z-50 pointer-events-none">
+        <h1 class="cinzel text-3xl text-yellow-500 font-bold tracking-widest drop-shadow-md">THE SHIELD OF ACHILLES</h1>
+        <p class="text-xs text-slate-400 mt-2 tracking-widest uppercase">System of Production v18.0 //
+            Hephaestus_Model_Main</p>
+    </div>
+
+    <!-- The Shield Container -->
+    <div class="layer-container" id="shield-container">
+        <!-- Layer 3: Code -->
+        <div id="layer-code" class="absolute inset-0">
+            <canvas id="canvas-code" width="600" height="600" class="canvas-layer"></canvas>
+            <div class="scanline"></div>
+        </div>
+
+        <!-- Layer 2: Mesh -->
+        <div id="layer-mesh" class="absolute inset-0 transition-opacity duration-100">
+            <canvas id="canvas-mesh" width="600" height="600" class="canvas-layer"></canvas>
+        </div>
+
+        <!-- Layer 1: Surface -->
+        <div id="layer-surface" class="absolute inset-0 transition-opacity duration-100">
+            <canvas id="canvas-surface" width="600" height="600" class="canvas-layer"></canvas>
+            <!-- Overlay texture for bronze feel -->
+            <div class="absolute inset-0 opacity-30 mix-blend-overlay"
+                style="background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIi8+CjxyZWN0IHdpZHRoPSIxIiBoZWlnaHQ9IjEiIGZpbGw9IiMwMDAiLz4KPC9zdmc+');">
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="control-panel">
+        <div class="flex justify-between items-center mb-4">
+            <div class="text-center w-1/3 transition-colors duration-300" id="label-code">
+                <div class="text-xs uppercase tracking-widest text-slate-500">Anthropologist</div>
+                <div class="font-bold text-green-500 glow-text">WORLDTEXT</div>
+            </div>
+            <div class="text-center w-1/3 transition-colors duration-300" id="label-mesh">
+                <div class="text-xs uppercase tracking-widest text-slate-500">Technologist</div>
+                <div class="font-bold text-cyan-500">MESH</div>
+            </div>
+            <div class="text-center w-1/3 transition-colors duration-300" id="label-surface">
+                <div class="text-xs uppercase tracking-widest text-slate-500">Philosopher</div>
+                <div class="font-bold text-yellow-500">ICONIC</div>
+            </div>
+        </div>
+
+        <input type="range" min="0" max="100" value="100" id="reality-slider" class="mb-2">
+
+        <div class="flex justify-between text-[10px] text-slate-500 font-mono mt-1">
+            <span>RAW DATA</span>
+            <span>SIMULATION</span>
+            <span>RENDER</span>
+        </div>
+        <div class="mt-4 text-center">
+            <p id="description-text" class="text-sm text-slate-300 italic">"The perfect, glowing bronze shield. A static
+                map of the cosmos."</p>
+        </div>
+    </div>
+
+    <script>
+        // --- Configuration ---
+        const width = 600;
+        const height = 600;
+        const centerX = width / 2;
+        const centerY = height / 2;
+
+        // --- Elements ---
+        const slider = document.getElementById('reality-slider');
+        const layerSurface = document.getElementById('layer-surface');
+        const layerMesh = document.getElementById('layer-mesh');
+        const layerCode = document.getElementById('layer-code');
+        const shieldContainer = document.getElementById('shield-container');
+
+        const labelSurface = document.getElementById('label-surface');
+        const labelMesh = document.getElementById('label-mesh');
+        const labelCode = document.getElementById('label-code');
+        const descText = document.getElementById('description-text');
+
+        // --- Data for the Shield (City, Ocean, Stars) ---
+        // We define shapes as points so we can render them differently in each layer
+        const cityBuildings = [
+            { x: 250, y: 350, w: 40, h: 80 },
+            { x: 300, y: 330, w: 50, h: 100 },
+            { x: 360, y: 360, w: 30, h: 70 },
+            { x: 200, y: 370, w: 40, h: 60 },
+            { x: 400, y: 380, w: 35, h: 50 },
+            // Wall
+            { x: 150, y: 420, w: 340, h: 20 }
+        ];
+
+        const stars = [];
+        for (let i = 0; i < 30; i++) {
+            stars.push({
+                x: centerX + (Math.random() - 0.5) * 400,
+                y: centerY + (Math.random() - 0.5) * 400 - 150, // Top half
+                size: Math.random() * 3 + 1
+            });
+        }
+        // Filter stars to be inside circle mostly
+        const validStars = stars.filter(s => {
+            const dx = s.x - centerX;
+            const dy = s.y - centerY;
+            return (dx * dx + dy * dy) < 250 * 250 && s.y < centerY;
+        });
+
+        // --- Drawing Functions ---
+
+        function drawSurface() {
+            const ctx = document.getElementById('canvas-surface').getContext('2d');
+            ctx.clearRect(0, 0, width, height);
+
+            // 1. Oceanus (Border)
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 280, 0, Math.PI * 2);
+            ctx.lineWidth = 20;
+            ctx.strokeStyle = '#78350f'; // Dark bronze
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 260, 0, Math.PI * 2);
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#fcd34d'; // Gold highlight
+            ctx.stroke();
+
+            // 2. Sky Background (Top half arc)
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 250, Math.PI, 0);
+            ctx.fillStyle = '#451a03'; // Dark bronze sky
+            ctx.fill();
+            ctx.restore();
+
+            // 3. Earth Background (Bottom half arc)
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 250, 0, Math.PI);
+            ctx.fillStyle = '#92400e'; // Earthy bronze
+            ctx.fill();
+            ctx.restore();
+
+            // 4. City (Gold Blocks)
+            ctx.fillStyle = '#fbbf24';
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#fcd34d';
+            cityBuildings.forEach(b => {
+                ctx.fillRect(b.x, b.y, b.w, b.h);
+                // Roof
+                ctx.beginPath();
+                ctx.moveTo(b.x, b.y);
+                ctx.lineTo(b.x + b.w / 2, b.y - 15);
+                ctx.lineTo(b.x + b.w, b.y);
+                ctx.fill();
+            });
+            ctx.shadowBlur = 0;
+
+            // 5. Stars (Gold Dots)
+            ctx.fillStyle = '#ffffff';
+            ctx.shadowBlur = 5;
+            ctx.shadowColor = '#fff';
+            validStars.forEach(s => {
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function drawMesh() {
+            const ctx = document.getElementById('canvas-mesh').getContext('2d');
+            ctx.clearRect(0, 0, width, height);
+
+            ctx.strokeStyle = '#06b6d4'; // Cyan
+            ctx.lineWidth = 1;
+            ctx.lineJoin = 'round';
+
+            // 1. Oceanus Grid
+            for (let i = 0; i < 36; i++) {
+                const angle = (i / 36) * Math.PI * 2;
+                ctx.beginPath();
+                ctx.moveTo(centerX + Math.cos(angle) * 250, centerY + Math.sin(angle) * 250);
+                ctx.lineTo(centerX + Math.cos(angle) * 290, centerY + Math.sin(angle) * 290);
+                ctx.stroke();
+            }
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 250, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 290, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // 2. City Wireframes
+            cityBuildings.forEach(b => {
+                // Box
+                ctx.strokeRect(b.x, b.y, b.w, b.h);
+                // Crosshatch (Triangulation)
+                ctx.beginPath();
+                ctx.moveTo(b.x, b.y);
+                ctx.lineTo(b.x + b.w, b.y + b.h);
+                ctx.stroke();
+
+                // Roof Triangle
+                ctx.beginPath();
+                ctx.moveTo(b.x, b.y);
+                ctx.lineTo(b.x + b.w / 2, b.y - 15);
+                ctx.lineTo(b.x + b.w, b.y);
+                ctx.lineTo(b.x, b.y); // Close loop
+                ctx.stroke();
+                // Roof mid-line
+                ctx.beginPath();
+                ctx.moveTo(b.x + b.w / 2, b.y - 15);
+                ctx.lineTo(b.x + b.w / 2, b.y + b.h);
+                ctx.setLineDash([2, 4]);
+                ctx.stroke();
+                ctx.setLineDash([]);
+            });
+
+            // 3. Stars (Vertices)
+            ctx.fillStyle = '#06b6d4';
+            validStars.forEach(s => {
+                ctx.fillRect(s.x - 1, s.y - 1, 2, 2);
+                // Connect nearby stars
+                validStars.forEach(s2 => {
+                    const d = Math.hypot(s.x - s2.x, s.y - s2.y);
+                    if (d < 50) {
+                        ctx.beginPath();
+                        ctx.moveTo(s.x, s.y);
+                        ctx.lineTo(s2.x, s2.y);
+                        ctx.strokeStyle = 'rgba(6, 182, 212, 0.2)';
+                        ctx.stroke();
+                    }
+                });
+            });
+            ctx.strokeStyle = '#06b6d4'; // Reset
+        }
+
+        // Matrix Rain Variables
+        const fontSize = 14;
+        const columns = width / fontSize;
+        const drops = Array(Math.floor(columns)).fill(1);
+        const chars = "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ01"; // Greek + Binary
+
+        function drawCodeLoop() {
+            const ctx = document.getElementById('canvas-code').getContext('2d');
+
+            // Fade out
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            ctx.fillRect(0, 0, width, height);
+
+            ctx.fillStyle = '#22c55e'; // Green
+            ctx.font = fontSize + "px monospace";
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = chars.charAt(Math.floor(Math.random() * chars.length));
+                const x = i * fontSize;
+                const y = drops[i] * fontSize;
+
+                // Masking: Only draw if within the "Shield" area (Circle) or City
+                const dx = x - centerX;
+                const dy = y - centerY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < 280) {
+                    // Check if inside a building
+                    let inBuilding = false;
+                    for (let b of cityBuildings) {
+                        if (x > b.x && x < b.x + b.w && y > b.y - 15 && y < b.y + b.h) {
+                            inBuilding = true;
+                            break;
+                        }
+                    }
+
+                    if (inBuilding) {
+                        ctx.fillStyle = '#4ade80'; // Brighter green for objects
+                        ctx.fillText(text, x, y);
+                    } else if (dist < 280) {
+                        ctx.fillStyle = '#15803d'; // Darker green for background
+                        ctx.fillText(text, x, y);
+                    }
+                }
+
+                if (y > height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+
+            requestAnimationFrame(drawCodeLoop);
+        }
+
+        // --- Interaction Logic ---
+
+        function updateLayers() {
+            const val = parseInt(slider.value);
+
+            // Normalize value to 0-1
+            // 100 = Surface (Philosopher)
+            // 50 = Mesh (Technologist)
+            // 0 = Code (Anthropologist)
+
+            // Logic: 
+            // 100 -> Surface: 1, Mesh: 0, Code: 0
+            // 50 -> Surface: 0, Mesh: 1, Code: 0.5 (visible underneath)
+            // 0 -> Surface: 0, Mesh: 0, Code: 1
+
+            let surfaceOp = 0;
+            let meshOp = 0;
+            let codeOp = 1; // Code is always background
+
+            if (val > 50) {
+                // Transition Mesh -> Surface
+                const t = (val - 50) / 50; // 0 to 1
+                surfaceOp = t;
+                meshOp = 1 - t; // Mesh fades out as Surface fades in
+            } else {
+                // Transition Code -> Mesh
+                const t = val / 50; // 0 to 1
+                surfaceOp = 0;
+                meshOp = t;
+            }
+
+            layerSurface.style.opacity = surfaceOp;
+            layerMesh.style.opacity = meshOp;
+            // layerCode is always visible at bottom, but obscured by others
+
+            // Update UI Labels
+            labelSurface.style.opacity = (val > 60) ? 1 : 0.3;
+            labelMesh.style.opacity = (val > 20 && val < 80) ? 1 : 0.3;
+            labelCode.style.opacity = (val < 40) ? 1 : 0.3;
+
+            // Update Description
+            if (val > 80) {
+                descText.innerText = "\"The perfect, glowing bronze shield. A static map of the cosmos.\" (Philosopher)";
+                shieldContainer.style.boxShadow = "0 0 50px rgba(251, 191, 36, 0.4)";
+            } else if (val > 20) {
+                descText.innerText = "\"The wireframe simulation. The geometry of the god's thought.\" (Technologist)";
+                shieldContainer.style.boxShadow = "0 0 50px rgba(6, 182, 212, 0.4)";
+            } else {
+                descText.innerText = "\"The scrolling prompt. The labor of production and data streams.\" (Anthropologist)";
+                shieldContainer.style.boxShadow = "0 0 50px rgba(34, 197, 94, 0.4)";
+            }
+        }
+
+        // --- Initialization ---
+        drawSurface();
+        drawMesh();
+        drawCodeLoop(); // Start animation loop
+
+        slider.addEventListener('input', updateLayers);
+        updateLayers(); // Set initial state
+
+    </script>
+</body>
+
+</html>

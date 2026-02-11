@@ -1,0 +1,8 @@
+# macOS
+.DS_Store
+
+# Large video files (too big for GitHub)
+*.mp4
+*.mov
+*.avi
+*.mkv
