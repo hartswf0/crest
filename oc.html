@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenClaw Study</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-serif { font-family: 'Merriweather', serif; }
+        
+        /* Custom scrollbar styling for a cleaner look */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Smooth transition for hover effects */
+        .transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+    </style>
+</head>
+<body class="bg-white text-gray-900 flex flex-col md:flex-row h-screen overflow-hidden selection:bg-blue-100 selection:text-blue-900">
+
+    <!-- SIDEBAR NAVIGATION -->
+    <nav class="w-full md:w-64 bg-gray-50 border-b md:border-b-0 md:border-r border-gray-200 flex-shrink-0 flex flex-col h-auto md:h-full z-20">
+        <div class="p-6 border-b border-gray-200 bg-white">
+            <h1 class="text-lg font-bold tracking-tight text-gray-900 flex items-center gap-2">
+                <i data-lucide="book-open" class="text-blue-600 w-5 h-5"></i>
+                <span>OpenClaw Study</span>
+            </h1>
+            <p class="text-xs text-gray-500 mt-1">Transcript Analysis & Commentary</p>
+        </div>
+        
+        <div id="sidebar-list" class="flex-1 overflow-y-auto p-4 space-y-1">
+            <!-- Sidebar items will be injected here -->
+        </div>
+        
+        <div class="p-4 text-xs text-gray-400 border-t border-gray-200 bg-gray-50 hidden md:block">
+           Video Source: Lex Fridman Podcast #491
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
+        
+        <!-- READING BUFFER (Left/Center) -->
+        <div id="content-area" class="flex-1 overflow-y-auto p-8 lg:p-12 max-w-3xl mx-auto w-full scroll-smooth">
+            <!-- Content will be injected here -->
+        </div>
+
+        <!-- RIGHT PANEL: VIDEO PLAYER -->
+        <aside class="w-full lg:w-[400px] xl:w-[480px] bg-gray-50 border-l border-gray-200 flex flex-col shrink-0 h-1/3 lg:h-full border-t lg:border-t-0 shadow-inner lg:shadow-none z-10">
+            <div class="p-4 border-b border-gray-200 bg-white flex justify-between items-center">
+                <h3 class="text-sm font-semibold text-gray-900">Reference Material</h3>
+            </div>
+            
+            <div class="p-6 h-full overflow-y-auto">
+                 <div class="mb-4 w-full aspect-video bg-gray-100 border border-gray-200 shadow-sm rounded-sm overflow-hidden relative group">
+                    <iframe id="youtube-player" width="100%" height="100%" src="" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                 </div>
+                 
+                 <div class="bg-white p-4 rounded border border-gray-200 shadow-sm">
+                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Current Context</div>
+                    <div id="timestamp-display" class="text-sm text-gray-800 font-medium font-serif">
+                       timestamp: --:--:--
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2 leading-relaxed">
+                      Select any quote from the text to immediately synchronize the video player to that moment.
+                    </p>
+                 </div>
+            </div>
+        </aside>
+
+    </main>
+
+    <script>
+        // --- DATA ---
+        const VIDEO_ID = "YFjfBk8HI5o";
+
+        const CATEGORIES = [
+            {
+                id: "curve",
+                title: "The Curve of Agentic Programming",
+                icon: "activity",
+                commentary: "The arc of agentic mastery is non-linear; it resembles a bell curve of complexity. Practitioners often begin with thin, naive prompts (e.g., 'plz fix'), peak into a trap of over-orchestration involving complex chains and sub-agents, and eventually mature back into minimalism ('Hey, look at these files'). This mature simplicity relies on the agent's internalized context rather than explicit, heavy-handed instruction.",
+                quotes: [
+                    { text: "plz fix this", time: "01:04:45", label: "Entry Point (Thin)" },
+                    { text: "8 agents… chaining… custom subagent workflows… 18 slash commands…", time: "01:04:14", label: "The Complexity Trap" },
+                    { text: "Hey, look at these files […] and then do [med size change]", time: "01:04:41", label: "Mature Practice (Worldtext)" },
+                    { text: "I actually call it the agentic trap.", time: "01:04:45", label: "Warning" },
+                    { text: "There’s a whole bunch of people who try to automate the whole thing. I don’t think that works.", time: "01:20:03", label: "Automation Fallacy" }
+                ]
+            },
+            {
+                id: "operative",
+                title: "Operative Ekphrasis",
+                icon: "cpu",
+                commentary: "In this framework, prompts are no longer mere descriptions; they are executable actions. This concept of 'operative ekphrasis' suggests that text does not just describe a system but brings it into being. The prompt acts as a compiler for reality, initializing agents that can subsequently rewrite their own source code.",
+                quotes: [
+                    { text: "I was annoyed that it didn’t exist, so I just prompted it into existence.", time: "00:07:01", label: "Genesis" },
+                    { text: "You just prompted it to existence, and then the agent would just modify its own software.", time: "00:23:19", label: "Self-Modification" },
+                    { text: "Hey, what tools do you see? Can you call the tool yourself?", time: "00:24:14", label: "Introspection" }
+                ]
+            },
+            {
+                id: "thick_prompting",
+                title: "Thick Prompting as Empathy",
+                icon: "layers",
+                commentary: "Thick prompting is reframed here as situational context design or 'empathy' for the model. It requires perspective-taking: understanding the agent's tabula rasa state at the start of a session and curating the 'world' it sees. It is about managing attention rather than simply maximizing data input.",
+                quotes: [
+                    { text: "You have to learn the language of the agent… understand where they are good and where they need help.", time: "01:05:18", label: "Agent Empathy" },
+                    { text: "Consider how Codex or Claude sees your code base… they start a new session and they know nothing.", time: "01:06:16", label: "Tabula Rasa" },
+                    { text: "You gotta help those agents a little bit… guide them… where they should look.", time: "01:06:16", label: "Guidance" },
+                    { text: "It’s hard to know which question to ask.", time: "01:18:47", label: "The Skill Gap" }
+                ]
+            },
+            {
+                id: "multimodal",
+                title: "Multimodal Context",
+                icon: "file-text",
+                commentary: "Images are not just decorative; they are dense context carriers. This validates the 'imagetext' framework where visual data becomes a high-bandwidth channel for establishing shared ground between human and agent.",
+                quotes: [
+                    { text: "I wanted images, ’cause… I often use images when I prompt… an efficient way to give the agent more context.", time: "00:11:40", label: "Image as Context" }
+                ]
+            },
+            {
+                id: "ritual",
+                title: "Ritual & Incantation",
+                icon: "hash",
+                commentary: "Prompting develops its own liturgy—stable, ritualistic moves that structure the agent's cognitive loop (Plan → Act → Reflect). These 'micro-incantations' serve as cognitive guardrails.",
+                quotes: [
+                    { text: "There’s… little things that sometimes help, like ‘take your time.’", time: "01:07:33", label: "Pacing" },
+                    { text: "Discuss, give me options… Don’t write code yet… then… ‘Okay, build.’", time: "01:34:32", label: "Staging" },
+                    { text: "Now that you built it, what would you have done different?", time: "01:36:24", label: "Reflection" },
+                    { text: "Every time… afterwards I ask, ‘Hey, what can we refactor?’", time: "01:37:09", label: "Refinement" }
+                ]
+            },
+            {
+                id: "worldtext",
+                title: "Worldtext: Language as OS",
+                icon: "globe",
+                commentary: "Language is evolving into the universal operating system. 'Worldtext' describes the shift where natural language becomes the primary interface for procedural systems, wrapping disparate apps and APIs into a unified linguistic surface.",
+                quotes: [
+                    { text: "This is gonna be more and more your operating system.", time: "01:49:29", label: "Language as OS" },
+                    { text: "If I can access it in the browser… easy API. It’s a slow API.", time: "02:43:59", label: "Universal API" },
+                    { text: "I don’t wanna open a calendar app… I wanna tell my agent…", time: "03:00:16", label: "Intent over UI" }
+                ]
+            },
+            {
+                id: "community",
+                title: "Community & Authorship",
+                icon: "users",
+                commentary: "A tension in authorship arises: What counts as a contribution? The shift from Code PRs to 'Prompt PRs' challenges traditional notions of engineering, valuing the 'care' and 'instruction' embedded in the prompt trail over raw syntax.",
+                quotes: [
+                    { text: "They never wrote software… So I call them prompt requests in the end.", time: "00:25:00", label: "Prompt Requests" },
+                    { text: "I asked people to give me the prompts… very, very few actually cared.", time: "01:17:03", label: "Care as Currency" }
+                ]
+            }
+        ];
+
+        // --- STATE & UTILS ---
+        let currentCategoryIndex = 0;
+        
+        function parseTime(timeStr) {
+            const parts = timeStr.split(':').map(Number);
+            if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+            if (parts.length === 2) return parts[0] * 60 + parts[1];
+            return 0;
+        }
+
+        function formatTime(seconds) {
+            return new Date(seconds * 1000).toISOString().substr(11, 8);
+        }
+
+        function setVideoTime(timeStr) {
+            const seconds = parseTime(timeStr);
+            const player = document.getElementById('youtube-player');
+            player.src = `https://www.youtube.com/embed/${VIDEO_ID}?start=${seconds}&autoplay=1&rel=0&modestbranding=1&controls=1`;
+            document.getElementById('timestamp-display').innerText = `timestamp: ${formatTime(seconds)}`;
+        }
+
+        // --- RENDER LOGIC ---
+
+        function renderSidebar() {
+            const container = document.getElementById('sidebar-list');
+            container.innerHTML = CATEGORIES.map((cat, index) => {
+                const isActive = index === currentCategoryIndex;
+                const activeClass = isActive 
+                    ? 'bg-white text-blue-700 shadow-sm ring-1 ring-gray-200 font-medium' 
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900';
+                
+                // Note: using data-lucide for icons which gets replaced by Lucide.createIcons()
+                return `
+                    <button onclick="switchCategory(${index})" 
+                        class="w-full text-left px-3 py-2.5 text-sm rounded-md flex items-center gap-3 transition-colors ${activeClass}">
+                        <i data-lucide="${cat.icon}" class="${isActive ? 'text-blue-600' : 'text-gray-400'} w-4 h-4"></i>
+                        <span class="truncate">${cat.title}</span>
+                    </button>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        function renderContent() {
+            const cat = CATEGORIES[currentCategoryIndex];
+            const container = document.getElementById('content-area');
+            
+            const quotesHtml = cat.quotes.map(quote => `
+                <div onclick="setVideoTime('${quote.time}')" 
+                     class="group relative pl-6 border-l-4 border-gray-200 hover:border-blue-500 transition-colors cursor-pointer mb-8">
+                    <blockquote class="text-lg font-serif italic text-gray-800 mb-2">
+                        "${quote.text}"
+                    </blockquote>
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-bold text-gray-500 uppercase tracking-wide bg-gray-100 px-2 py-0.5 rounded-full">
+                            ${quote.label}
+                        </span>
+                        <div class="flex items-center gap-1 text-xs font-medium text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <i data-lucide="play" class="w-3 h-3 fill-current"></i>
+                            <span>Jump to ${quote.time}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = `
+                <div class="mb-8 pb-4 border-b border-gray-100">
+                    <div class="text-sm font-semibold text-blue-600 uppercase tracking-wide mb-2 flex items-center gap-2">
+                        <i data-lucide="${cat.icon}" class="w-4 h-4"></i>
+                        Section Analysis
+                    </div>
+                    <h2 class="text-3xl font-serif font-bold text-gray-900 leading-tight">
+                        ${cat.title}
+                    </h2>
+                </div>
+
+                <div class="prose prose-lg prose-slate text-gray-700 mb-10 leading-relaxed font-serif">
+                    <p>${cat.commentary}</p>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="flex items-center gap-2 text-sm font-bold text-gray-900 border-b border-gray-200 pb-2 mb-6">
+                        <i data-lucide="file-text" class="w-4 h-4"></i>
+                        Cited Transcripts
+                    </div>
+                    ${quotesHtml}
+                </div>
+                <div class="h-20"></div>
+            `;
+            lucide.createIcons();
+        }
+
+        function switchCategory(index) {
+            currentCategoryIndex = index;
+            renderSidebar();
+            renderContent();
+            // Optional: reset video time or keep playing? Keeping playing is usually better UX
+        }
+
+        // --- INIT ---
+        window.onload = function() {
+            renderSidebar();
+            renderContent();
+            // Init video with first quote time
+            setVideoTime(CATEGORIES[0].quotes[0].time);
+        };
+
+    </script>
+</body>
+</html>
